@@ -1,7 +1,7 @@
 Varios
 =============
 
-Small pieces of code that I find usefoul.
+Small pieces of code that I find useful.
 
 HTML grid
 -------
