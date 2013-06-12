@@ -1,0 +1,20 @@
+<VirtualHost *:80>
+	   ################################################################
+     # Maintenance vhost. Point the ServerName Directive to the app #
+     # URL, disable the app VirtualHost and perform                 #
+     # service apache2 reload                                       #
+     ################################################################
+	
+  ServerName XXXXXX.organization.com
+  CustomLog /var/log/apache2/maintenance-access.log combined
+  ErrorLog /var/log/apache2/maintenance-error.log
+	LogLevel warn
+ 
+  DocumentRoot /var/www/maintenance/
+
+	<Location />
+    order allow,deny
+    Allow from all
+  </Location>
+  
+</VirtualHost>
