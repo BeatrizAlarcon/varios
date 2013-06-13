@@ -12,3 +12,8 @@ Maintenance page
 -------
 
 A simple maintenance page. Includes both an Apache VirtualHost and the index.html page, with embedded CSS Styles to easier the deployment.
+
+Reverse proxy
+-------
+
+A simple apache2 reverse proxy.
