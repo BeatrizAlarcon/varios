@@ -21,4 +21,12 @@ A simple apache2 reverse proxy.
 Backup script
 -------
 
-Incremental backup script.
+Incremental backup script. It uses complete and incremental backups, with 
+hard links to simulate snapshots. $FULL_BACKUP_LIMIT controls the frecuency 
+of full backups.It accepts at least one source directory and a single destination directory as arguments. Usage:
+
+    incremental_backup.sh SOURCE_DIRECTORY_1 [SOURCE_DIRECTORY_2..N] DESTINATION_DIRECTORY
+
+Todo:                                                                  
+* Better exclusion management
+* Simulation flag     

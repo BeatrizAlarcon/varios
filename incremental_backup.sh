@@ -10,7 +10,6 @@
 #       DESTINATION_DIRECTORY                                              #
 #                                                                          #
 #  Todo:                                                                   #
-# - Delete old backups                                                     #
 # - Better exclusion management                                            #
 # - Simulation flag                                                        #
 ############################################################################
@@ -20,12 +19,8 @@ TIMESTAMP=$(date +%m%d%y%H%M%S)
 FULL_BACKUP_STRING=backup-full-$DATE-$TIMESTAMP
 INC_BACKUP_STRING=backup-inc-$DATE-$TIMESTAMP
 FULL_BACKUP_LIMIT=6
+BACKUPS_TO_KEEP=21
 LOG=/var/log/backup.log
-
-echo ""
-echo ""
-echo "[" `date +%Y-%m-%d_%R` "]" "###### Starting backup #######" >> $LOG
-
 
 ############################################################################
 # Arguments processing. The last argument is the destination directory, the#
@@ -37,6 +32,7 @@ ARGS=("$@")
 if [ ${#ARGS[*]} -lt 2 ]; then
   echo "At least two arguments are needed" >> $LOG
   echo "Usage: bash incremental_backup [SOURCE_DIR_1]...[SOURCE_DIR_N] [DESTINATION_DIR]" >> $LOG
+  exit;
 else
 
   #Store the destination directory
@@ -54,8 +50,14 @@ else
     SOURCE_DIRS=$SOURCE_DIRS" "$CURRENT_SOURCE_DIR
   done
 
-  echo "Directories to backup" $SOURCE_DIRS >> $LOG
-  echo "Destination directory" $DEST_DIR >> $LOG
+  echo "" >> $LOG
+  echo "" >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "###### Starting backup #######" >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "Directories to backup" $SOURCE_DIRS >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "Destination directory" $DEST_DIR >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "Limit to full backup:" $FULL_BACKUP_LIMIT >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "Backups to keep:"      $BACKUPS_TO_KEEP >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "###### Browsing previous backups ######" >> $LOG
 fi
 
 ############################################################################
@@ -73,7 +75,34 @@ do
     
 done
 
+############################################################################
+# Delete old backups, if necessary                                         #
+############################################################################
+
+echo "[" `date +%Y-%m-%d_%R` "]" "###### Deleting old backups ######" >> $LOG
 echo "[" `date +%Y-%m-%d_%R` "]" "Number of previous backups: " ${#BACKUPS_LIST[*]} >> $LOG
+echo "[" `date +%Y-%m-%d_%R` "]" "Backups to keep:"      $BACKUPS_TO_KEEP >> $LOG
+
+###
+if [ $BACKUPS_TO_KEEP -lt ${#BACKUPS_LIST[*]} ]; then
+  let BACKUPS_TO_DELETE=${#BACKUPS_LIST[*]}-$BACKUPS_TO_KEEP
+  echo "[" `date +%Y-%m-%d_%R` "]" "Need to delete" $BACKUPS_TO_DELETE" backups" $BACKUPS_TO_DELETE >> $LOG
+
+  while [ $BACKUPS_TO_DELETE -gt 0 ]; do
+    BACKUP=${BACKUPS_LIST[${#BACKUPS_LIST[*]}-1]}
+    unset BACKUPS_LIST[${#BACKUPS_LIST[*]}-1]
+    echo "[" `date +%Y-%m-%d_%R` "]" "Backup to delete:" $BACKUP >> $LOG
+    rm -rf $DEST_DIR"/"$BACKUP >> $LOG
+    if [ $? -ne 0 ]; then
+      echo "[" `date +%Y-%m-%d_%R` "]" "####### Error while deleting backup #######" >> $LOG
+    else
+      echo "[" `date +%Y-%m-%d_%R` "]" "Backup correctly deleted" >> $LOG
+    fi
+    let BACKUPS_TO_DELETE=BACKUPS_TO_DELETE-1
+  done
+else
+  echo "[" `date +%Y-%m-%d_%R` "]" "No need to delete backups" >> $LOG  
+fi
 
 
 ############################################################################
@@ -86,10 +115,13 @@ NEXT_BACKUP_FULL=true
 COUNTER=0
 LAST_FULL_BACKUP=
 
+echo "[" `date +%Y-%m-%d_%R` "]" "###### Performing the backup ######" >> $LOG
+
 while [[ $COUNTER -lt $FULL_BACKUP_LIMIT && $COUNTER -lt ${#BACKUPS_LIST[*]} ]]; do
   if [[ ${BACKUPS_LIST[$COUNTER]} == *full* ]]; then
   	NEXT_BACKUP_FULL=false;
   	LAST_FULL_BACKUP=${BACKUPS_LIST[$COUNTER]}
+    echo "[" `date +%Y-%m-%d_%R` "]" "A full backup was performed" $COUNTER "backups ago which is less that the specified limit of" $FULL_BACKUP_LIMIT>> $LOG
   	break;
   fi
   let COUNTER=COUNTER+1
@@ -100,10 +132,10 @@ done
 ############################################################################
 
 if [ $NEXT_BACKUP_FULL == true ]; then
-	echo "[" `date +%Y-%m-%d_%R` "]" "The next backup will be full" >> $LOG
+	echo "[" `date +%Y-%m-%d_%R` "]" "The backup will be full" >> $LOG
 	rsync -h -ab --stats --exclude '.cache/' --exclude '.thumbnails/' --exclude '.gvfs' --delete $SOURCE_DIRS $DEST_DIR/$FULL_BACKUP_STRING >> $LOG
 else
-	echo "[" `date +%Y-%m-%d_%R` "]" "The next backup will be incremental" >> $LOG
+	echo "[" `date +%Y-%m-%d_%R` "]" "The backup will be incremental" >> $LOG
 	rsync -h -ab --stats --exclude '.cache/' --exclude '.thumbnails/' --exclude '.gvfs' --delete --link-dest=$DEST_DIR/$LAST_FULL_BACKUP $SOURCE_DIRS $DEST_DIR/$INC_BACKUP_STRING >> $LOG
 fi
 
@@ -111,13 +143,12 @@ fi
 # Log the backup status                                                    #
 ############################################################################
 
-STATUS=$?
 if [ $? -ne 0 ]; then
 	echo "[" `date +%Y-%m-%d_%R` "]" "####### Error during the backup. Please execute the script with the -v flag #######" >> $LOG
-  echo ""
-  echo ""
+  echo "" >> $LOG
+  echo "" >> $LOG
 else
 	echo "[" `date +%Y-%m-%d_%R` "]" "####### Backup correct #######" >> $LOG
-  echo ""
-  echo ""
+  echo "" >> $LOG
+  echo "" >> $LOG
 fi
