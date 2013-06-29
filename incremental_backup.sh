@@ -10,7 +10,6 @@
 #       DESTINATION_DIRECTORY                                              #
 #                                                                          #
 #  Todo:                                                                   #
-# - Better exclusion management                                            #
 # - Simulation flag                                                        #
 #                                                                          #
 #  Author: Álvaro Reig González                                            #
@@ -25,6 +24,7 @@ FULL_BACKUP_STRING=backup-full-$DATE-$TIMESTAMP
 INC_BACKUP_STRING=backup-inc-$DATE-$TIMESTAMP
 FULL_BACKUP_LIMIT=6
 BACKUPS_TO_KEEP=21
+EXCLUSSIONS="--exclude .cache/ --exclude .thumbnails/ --exclude .gvfs"
 LOG=/var/log/backup.log
 
 ############################################################################
@@ -58,10 +58,11 @@ else
   echo "" >> $LOG
   echo "" >> $LOG
   echo "[" `date +%Y-%m-%d_%R` "]" "###### Starting backup #######" >> $LOG
-  echo "[" `date +%Y-%m-%d_%R` "]" "Directories to backup" $SOURCE_DIRS >> $LOG
-  echo "[" `date +%Y-%m-%d_%R` "]" "Destination directory" $DEST_DIR >> $LOG
-  echo "[" `date +%Y-%m-%d_%R` "]" "Limit to full backup:" $FULL_BACKUP_LIMIT >> $LOG
-  echo "[" `date +%Y-%m-%d_%R` "]" "Backups to keep:"      $BACKUPS_TO_KEEP >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "Directories to backup"  $SOURCE_DIRS >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "Destination directory"  $DEST_DIR >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "Limit to full backup:"  $FULL_BACKUP_LIMIT >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "Backups to keep:"       $BACKUPS_TO_KEEP >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "Exclussions:"           $EXCLUSSIONS >> $LOG
   echo "[" `date +%Y-%m-%d_%R` "]" "###### Browsing previous backups ######" >> $LOG
 fi
 
@@ -138,10 +139,11 @@ done
 
 if [ $NEXT_BACKUP_FULL == true ]; then
 	echo "[" `date +%Y-%m-%d_%R` "]" "The backup will be full" >> $LOG
-	rsync -h -ab --stats --exclude '.cache/' --exclude '.thumbnails/' --exclude '.gvfs' --delete $SOURCE_DIRS $DEST_DIR/$FULL_BACKUP_STRING >> $LOG
+	rsync -h -ab --stats --delete $SOURCE_DIRS $DEST_DIR/$FULL_BACKUP_STRING $EXCLUSSIONS >> $LOG
 else
-	echo "[" `date +%Y-%m-%d_%R` "]" "The backup will be incremental" >> $LOG
-	rsync -h -ab --stats --exclude '.cache/' --exclude '.thumbnails/' --exclude '.gvfs' --delete --link-dest=$DEST_DIR/$LAST_FULL_BACKUP $SOURCE_DIRS $DEST_DIR/$INC_BACKUP_STRING >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "The backup will be incremental" >> $LOG
+	rsync -h -ab --stats --delete --link-dest=$DEST_DIR/$LAST_FULL_BACKUP $SOURCE_DIRS $DEST_DIR/$INC_BACKUP_STRING $EXCLUSSIONS >> $LOG
+  $COM >> $LOG
 fi
 
 ############################################################################
