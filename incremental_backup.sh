@@ -12,6 +12,11 @@
 #  Todo:                                                                   #
 # - Better exclusion management                                            #
 # - Simulation flag                                                        #
+#                                                                          #
+#  Author: Álvaro Reig González                                            #
+#  Licence: GNU GLPv3                                                      #                                                     #
+#  www.alvaroreig.com                                                      #
+#  https://github.com/alvaroreig                                           #
 ############################################################################
 
 DATE=`date +%Y%m%d` 
