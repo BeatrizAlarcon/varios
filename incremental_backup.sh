@@ -9,8 +9,6 @@
 # incremental_backup.sh SOURCE_DIRECTORY_1 [SOURCE_DIRECTORY_2..N]  			 #
 #       DESTINATION_DIRECTORY                                              #
 #                                                                          #
-#  Todo:                                                                   #
-# - Simulation flag                                                        #
 #                                                                          #
 #  Author: Álvaro Reig González                                            #
 #  Licence: GNU GLPv3                                                      #                                                     #
@@ -25,6 +23,8 @@ INC_BACKUP_STRING=backup-inc-$DATE-$TIMESTAMP
 FULL_BACKUP_LIMIT=6
 BACKUPS_TO_KEEP=21
 EXCLUSSIONS="--exclude .cache/ --exclude .thumbnails/ --exclude .gvfs"
+OPTIONS="-h -ab --stats"
+#To test the script, include "-n" to perform a 'dry' rsync
 LOG=/var/log/backup.log
 
 ############################################################################
@@ -139,10 +139,10 @@ done
 
 if [ $NEXT_BACKUP_FULL == true ]; then
 	echo "[" `date +%Y-%m-%d_%R` "]" "The backup will be full" >> $LOG
-	rsync -h -ab --stats --delete $SOURCE_DIRS $DEST_DIR/$FULL_BACKUP_STRING $EXCLUSSIONS >> $LOG
+	rsync $OPTIONS $EXCLUSSIONS $SOURCE_DIRS $DEST_DIR/$FULL_BACKUP_STRING  >> $LOG
 else
   echo "[" `date +%Y-%m-%d_%R` "]" "The backup will be incremental" >> $LOG
-	rsync -h -ab --stats --delete --link-dest=$DEST_DIR/$LAST_FULL_BACKUP $SOURCE_DIRS $DEST_DIR/$INC_BACKUP_STRING $EXCLUSSIONS >> $LOG
+	rsync $OPTIONS $EXCLUSSIONS --link-dest=$DEST_DIR/$LAST_FULL_BACKUP $SOURCE_DIRS $DEST_DIR/$INC_BACKUP_STRING >> $LOG
   $COM >> $LOG
 fi
 
