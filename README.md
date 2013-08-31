@@ -22,6 +22,10 @@ NIFvalidator
 -------
 Java class to validate an Spanish identification number (NIF).
 
+Nodejs web scrapong
+-------
+nodejs sample script that gets the news from www.inap.es.
+
 Backup script
 -------
 
