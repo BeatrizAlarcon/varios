@@ -35,6 +35,8 @@ of full backups.It accepts at least one source directory and a single destinatio
 
     incremental_backup.sh SOURCE_DIRECTORY_1 [SOURCE_DIRECTORY_2..N] DESTINATION_DIRECTORY
 
-Todo:                                                                  
-* Better exclusion management
-* Simulation flag     
+Recursive OCR script
+-------
+
+Recursive script that uses tesseract-ocr and Geza Kovacs's pdfocr to recurse into a directory, trying to perform
+OCR in every PDF file.
