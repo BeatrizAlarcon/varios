@@ -4,6 +4,9 @@
 # OCR recursive script. It uses google's "tesseract-ocr" and Geza Kovacs's #
 # pdfocr util to recurse into a directory and perform OCR on PDFs          #
 #                                                                          #
+#  tesseract: https://code.google.com/p/tesseract-ocr/                     #
+#  pdfocr: https://github.com/gkovacs/pdfocr                               #
+#                                                                          #
 # recursive_ocr.sh SOURCE_DIRECTORY                                        #
 #                                                                          #
 #                                                                          #
@@ -24,7 +27,7 @@ LOG_MARK="[" `date +%Y-%m-%d_%R` "]"
 SUFIX="-before-ocr-"$DATE-$TIMESTAMP
 FILETYPE="pdf"
 PDFOCR="ruby /opt/pdfocr/pdfocr.rb -t"
-TIMEOUT_ORDER="timeout 10m"
+TIMEOUT_LIMIT="10m"
 LOG=/opt/pdfocr/ocr.log
 
 FILES_IGNORED=0
@@ -41,16 +44,18 @@ if [ ${#ARGS[*]} -ne 1 ]; then
   exit;
 fi
 
-  echo $LOG_MARK "============================"  >> $LOG
-  echo $LOG_MARK "==Starting recursive OCR===="  >> $LOG
-  echo $LOG_MARK "============================"  >> $LOG
+
+echo $LOG_MARK "============================"  >> $LOG
+echo $LOG_MARK "==Starting recursive OCR===="  >> $LOG
+echo $LOG_MARK "============================"  >> $LOG
 
 recurse() {
   for i in "$1"/*;do
     if [ -d "$i" ];then
+        #echo "dir: $i"
         recurse "$i"
     elif [ -f "$i" ]; then
-    	echo $LOG_MARK "============="  >> $LOG
+      echo $LOG_MARK "============="  >> $LOG
         echo $LOG_MARK "File:" "$i" >> $LOG
         let FILES_TOTAL=$FILES_TOTAL+1
         
@@ -60,33 +65,35 @@ recurse() {
         file="${filename%.*}"
 
         echo $LOG_MARK "filename:" $filename  >> $LOG
+        #echo "extension:" $extension  >> $LOG
+        #echo "dirname" $dirname  >> $LOG
 
         if [ $extension == $FILETYPE ]; then
-        	 echo $LOG_MARK "Found "$FILETYPE" type" >> $LOG
+           echo $LOG_MARK "Found "$FILETYPE" type" >> $LOG
 
-        	 #Check that the file wasn't already processed
-        	 PROCES_FILE=true
-        	 cd "$dirname"
-        	 for a in `ls "$file"*`; do
-        	 	if [[ "$a" == *ocr* ]]; then
-        	 		echo $LOG_MARK "This file was already processed"  >> $LOG
+           #Check that the file wasn't already processed
+           PROCES_FILE=true
+           cd "$dirname"
+           for a in `ls "$file"*`; do
+            if [[ "$a" == *ocr* ]]; then
+              echo $LOG_MARK "This file was already processed"  >> $LOG
               let FILES_IGNORED=$FILES_IGNORED+1
-        	 		PROCES_FILE=false
-        	 		break
-       	 		fi
-       	 	done
+              PROCES_FILE=false
+              break
+            fi
+          done
 
-       	 	if [[ $PROCES_FILE == true ]]; then
+          if [[ $PROCES_FILE == true ]]; then
 
-       	 		#Running tesseract
+            #Running tesseract
             echo $LOG_MARK "--------------"  >> $LOG
             let FILES_ATTEMPTED=$FILES_ATTEMPTED+1
             new_name=$file$SUFIX"."$extension
 
             if [[ $DRY_RUN == false ]]; then
-              $TIMEOUT_ORDER $PDFOCR -i "$filename" -o "$new_name"  >> $LOG
+              timeout $TIMEOUT_LIMIT $PDFOCR -i "$filename" -o "$new_name"  >> $LOG
             fi
-       	 	
+          
 
             #If tesseract succeded, swap the files
             if [[ -f $new_name ]]; then
