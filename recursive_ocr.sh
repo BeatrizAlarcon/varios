@@ -49,6 +49,7 @@ if [ ${#ARGS[*]} -ne 1 ]; then
 fi
 
 
+echo $LOG_MARK ""  >> $LOG
 echo $LOG_MARK "============================"  >> $LOG
 echo $LOG_MARK "==Starting recursive OCR===="  >> $LOG
 echo $LOG_MARK "============================"  >> $LOG
@@ -56,7 +57,6 @@ echo $LOG_MARK "============================"  >> $LOG
 recurse() {
   for i in "$1"/*;do
     if [ -d "$i" ];then
-        #echo "dir: $i"
         recurse "$i"
     elif [ -f "$i" ]; then
       echo $LOG_MARK "============="  >> $LOG
@@ -68,8 +68,6 @@ recurse() {
         file="${filename%.*}"
 
         echo $LOG_MARK "filename:" $filename  >> $LOG
-        #echo "extension:" $extension  >> $LOG
-        #echo "dirname" $dirname  >> $LOG
 
         if [ $extension == $FILETYPE ]; then
            echo $LOG_MARK "Found "$FILETYPE" type" >> $LOG
@@ -91,10 +89,10 @@ recurse() {
           FONTS=`pdffonts "$filename"`
           if [[ ${#FONTS} -ne $EMPTY_FONTS_HEADER_SIZE ]]; then
             echo $LOG_MARK "This file has fonts, assuming that it is already searchable"  >> $LOG
-      if [[ $PROCESS_FILE == true ]]; then
+            if [[ $PROCESS_FILE == true ]]; then
               PROCESS_FILE=false
               let FILES_ALREADY_SEARCHABLE=$FILES_ALREADY_SEARCHABLE+1
-      fi
+            fi
           fi
 
           if [[ $PROCESS_FILE == true ]]; then
