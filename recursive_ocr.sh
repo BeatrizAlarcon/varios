@@ -18,17 +18,19 @@
 # ToDo                                                                     #
 # -Exclussion management: based on size, keywords, etc.                    #
 # -Adjust timeout based on file size                                       #
-# -Remove annoying error in line 21                                        #
 ############################################################################
 
 DATE=`date +%Y%m%d`
 TIMESTAMP=$(date +%m%d%y%H%M%S)
-LOG_MARK="[" `date +%Y-%m-%d_%R` "]"
+DATE_MARK=`date +%Y-%m-%d_%R`
+LOG_MARK="["$DATE_MARK"]"
 SUFIX="-before-ocr-"$DATE-$TIMESTAMP
 FILETYPE="pdf"
 PDFOCR="ruby /opt/pdfocr/pdfocr.rb -t"
 TIMEOUT_LIMIT="10m"
 LOG=/opt/pdfocr/ocr.log
+DATE_TMP=`date +%Y%m%d`
+DELETE_TMP_FILES="rm -rf /tmp/d"$DATE_TMP"*"
 
 FILES_IGNORED=0
 FILES_PROCESSED=0
@@ -108,6 +110,9 @@ recurse() {
               let FILES_PROCESSED=$FILES_PROCESSED+1
             fi
           fi
+          # Tesseract stores temp files in /tmp, if they are not
+	  # deleted we will run out of free space
+          $DELETE_TMP_FILES
         fi
     fi
  done
