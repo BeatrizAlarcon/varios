@@ -8,6 +8,13 @@
 #  Licence: GNU GLPv3                                                      # 
 #  www.alvaroreig.com                                                      #
 #  https://github.com/alvaroreig                                           #
+#                                                                          #
+#                                                                          #
+# @todo                                                                    #
+# - relative symlinks
+# - deploymento to pre/pro environment
+#		- input version number
+#		- svn tag after deployment
 ############################################################################
 
 LOG=/tmp/deployment.log
@@ -63,12 +70,9 @@ $SSH_PREFIX svn co "$SVN_REPO""/trunk" $TMP_DIR_NAME"/trunk" "> $TMP_SVN_LOG"
 $SSH_PREFIX svn co "$SVN_REPO""/config" $TMP_DIR_NAME"/config" "> $TMP_SVN_LOG"
 REVISION_NUMER=`$SSH_PREFIX "cat $TMP_SVN_LOG |grep obtenida | cut -c21-22"`
 echo "Revision number: " $REVISION_NUMER
-NEW_RELEASE_DIR=$APP_NAME"-rev"$REVISION_NUMER
-
+NEW_RELEASE_DIR=$APS_DIR_ROOT$APP_NAME"/"$APP_NAME"-rev"$REVISION_NUMER
 echo "The new release will be stored in "$NEW_RELEASE_DIR
-##TMP##
-NEW_RELEASE_DIR=$APS_DIR_ROOT$APP_NAME"/"$NEW_RELEASE_DIR
-##FTMP###
+
 
 echo "Checking if the last version is already present"
 RELEASE_ALREADY_PRESENT=$( $SSH_PREFIX ls -al "$APS_DIR_ROOT$APP_NAME""/" | grep "$NEW_RELEASE_DIR")
