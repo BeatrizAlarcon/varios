@@ -80,7 +80,7 @@ RELEASE_ALREADY_PRESENT=$( $SSH_PREFIX ls -al "$APS_DIR_ROOT$APP_NAME""/" | grep
 if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
 	echo "The latest revision is" $REVISION_NUMER "which is already present"
 	echo "Deleting temp files"
-	$SSH_PREFIX "rm -rf $TMP_DIR_ROOT$APP_NAME*"
+	$SSH_PREFIX "rm -rf $TMP_DIR_NAME"
 	echo "Process aborted."
 	exit 0
 fi
@@ -116,7 +116,7 @@ echo "chown to www-data the new release directory and the symlink directory"
 $ROOT_SSH_PREFIX "chown -h www-data:"$USER" $PORTAL_DIR ; chmod 774 -R $NEW_RELEASE_DIR ; chown -R www-data:"$USER" $NEW_RELEASE_DIR"
 
 echo "Process completed, deleting temp files"
-$SSH_PREFIX "rm -rf $TMP_DIR_ROOT$APP_NAME*"
+$SSH_PREFIX "rm -rf $TMP_DIR_NAME"
 
 echo "Done"
 exit 0
