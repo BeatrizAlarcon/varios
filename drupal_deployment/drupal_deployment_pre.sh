@@ -13,7 +13,7 @@
 # @todo                                                                    #
 # - relative symlinks
 # - delete old versions
-# - deploymento to pre/pro environment
+# - deploymento to pre/pro environment 
 ############################################################################
 
 DATE=`date +%Y%m%d` 
