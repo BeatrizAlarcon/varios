@@ -12,7 +12,7 @@
 #                                                                          #
 # @todo                                                                    #
 # - relative symlinks
-# - Find out SVN revision before downloading code
+# - find out svn revision without downloading code
 # - deploymento to pre/pro environment
 #		- input version number
 #		- svn tag after deployment
@@ -20,7 +20,7 @@
 
 LOG=/tmp/deployment.log
 DATE=`date +%Y%m%d` 
-TIMESTAMP=$(date +%m%d%y%H%M%S) 
+TIMESTAMP=`date +%y%m%d%H%M%S`
 TMP_DIR_ROOT="/tmp/"
 APS_DIR_ROOT="/opt/"
 
@@ -31,13 +31,14 @@ APS_DIR_ROOT="/opt/"
 
 ARGS=("$@")
 
-if [ ${#ARGS[*]} -lt 2 ]; then
-  echo "Two arguments are needed"
-  echo "Usage: bash drupal_deployment.sh [SVN_REPO] [APP_NAME]"
+if [ ${#ARGS[*]} -lt 3 ]; then
+  echo "Three arguments are needed"
+  echo "Usage: bash drupal_deployment.sh [SVN_REPO] [APP_NAME] [THEME_FILE]"
   exit;
 else
 	SVN_REPO=${ARGS[0]}
 	APP_NAME=${ARGS[1]}
+	THEME_LINE=${ARGS[2]}
 
 
 	echo "SVN_REPO" $SVN_REPO
@@ -107,6 +108,9 @@ echo "chown to www-data the new release directory and the symlink directory"
 chown -h www-data:$USER $PORTAL_DIR
 chmod 774 -R $NEW_RELEASE_DIR
 chown -R www-data:$USER $NEW_RELEASE_DIR
+
+echo "Inserting revision line in drupal template footer"
+echo "Revision $REVISION_NUMER deployed on $TIMESTAMP" >> $THEME_LINE
 
 echo "Process completed, deleting temp files"
 rm -rf $TMP_DIR_NAME
