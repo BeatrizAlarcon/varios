@@ -71,14 +71,17 @@ if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
 fi
 
 
-echo "$LOG_MARK Creating temp dir:" $TMP_DIR_NAME
+
+echo "$LOG_MARK The latest revision is not present."
+
+echo "$LOG_MARK Creating temp dir: $TMP_DIR_NAME"
 mkdir $TMP_DIR_NAME
 mkdir $TMP_DIR_NAME"/trunk"
 SOURCES_DIR=$TMP_DIR_NAME"/trunk/"
 CONFIG_FILES_DIR=$TMP_DIR_NAME"/config/"
 TMP_SVN_LOG=$TMP_DIR_ROOT"/svn_log.tmp"
 
-echo "$LOG_MARK The latest revision is not present. Creating release directory: " $NEW_RELEASE_DIR
+echo "Creating release directory: $NEW_RELEASE_DIR"
 mkdir $NEW_RELEASE_DIR
 
 echo "$LOG_MARK Downloading code from SVN repository"
@@ -88,7 +91,7 @@ svn co "$SVN_REPO""/config" $TMP_DIR_NAME"/config" > "$TMP_SVN_LOG"
 echo "$LOG_MARK Copying code to release directory"
 cp -rv $SOURCES_DIR* $NEW_RELEASE_DIR  > /dev/null
  
-echo "$LOG_MARK Copying configuration file (PRE)"
+echo "$LOG_MARK Copying configuration file PRE"
 cp -rv "$CONFIG_FILES_DIR""/config_files/pre/settings.php" "$NEW_RELEASE_DIR""/sites/default/settings.php" > /dev/null
 
 echo "$LOG_MARK Deleting hidden files in release directory"
@@ -115,7 +118,7 @@ chmod 774 -R $NEW_RELEASE_DIR
 chown -R www-data:$OPERATION_USER $NEW_RELEASE_DIR
 
 echo "$LOG_MARK Inserting revision line in drupal template footer"
-echo "$LOG_MARK Revision $REVISION_NUMER deployed on $TIMESTAMP" >> $THEME_LINE
+echo "$LOG_MARK Revision $REVISION_NUMER deployed on $LOG_MARK" >> $THEME_LINE
 
 echo "$LOG_MARK Process completed, deleting temp files"
 rm -rf $TMP_DIR_NAME
