@@ -14,8 +14,6 @@
 # - relative symlinks
 # - delete old versions
 # - deploymento to pre/pro environment
-#		- input version number
-#		- svn tag after deployment
 ############################################################################
 
 DATE=`date +%Y%m%d` 
