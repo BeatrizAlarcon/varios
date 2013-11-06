@@ -10,10 +10,9 @@
 #  https://github.com/alvaroreig                                           #
 #                                                                          #
 #                                                                          #
-# @todo                                                                    #
+# @todo                   
+# - manage the maintenance virtualhost                                     #
 # - relative symlinks
-# - deploymento to pre/pro environment
-#		- svn tag after deployment
 ############################################################################
 
 DATE=`date +%Y%m%d` 

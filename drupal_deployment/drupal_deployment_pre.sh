@@ -22,6 +22,7 @@ LOG_MARK=`date +%Y-%m-%d_%R`
 TMP_DIR_ROOT="/tmp/"
 APS_DIR_ROOT="/opt/"
 REVISION_KEYWORD="Revisión"
+NUMBER_OF_VERSIONS_TO_KEEP="5"
 
 
 ############################################################################
@@ -60,7 +61,8 @@ echo "$LOG_MARK Revision number: " $REVISION_NUMER
 
 NEW_RELEASE_DIR=$APS_DIR_ROOT$APP_NAME"/"$APP_NAME"-rev"$REVISION_NUMER
 
-echo "$LOG_MARK Checking if the last version is already present"
+# Check if the latest revision is already deployed
+echo "$LOG_MARK Checking if the last revision is already present"
 RELEASE_ALREADY_PRESENT=`ls -al $APS_DIR_ROOT$APP_NAME | grep $NEW_RELEASE_DIR`
 
 
@@ -74,6 +76,47 @@ fi
 
 echo "$LOG_MARK The latest revision is not present."
 
+# Check if old revisions should be deleted
+echo "$LOG_MARK Checking if old revisions should be deleted"
+DEPLOYED_VERSIONS=`ls -tr $APS_DIR_ROOT$APP_NAME |grep -rev`
+DEPLOYED_VERSIONS_COUNTER=0
+DEPLOYED_VERSIONS_LIST=()
+
+# Iterate through deployed versions
+for x in $DEPLOYED_VERSIONS
+do
+    DEPLOYED_VERSIONS_LIST[$DEPLOYED_VERSIONS_COUNTER]="$x"
+    # echo "$LOG_MARK" ${DEPLOYED_VERSIONS_LIST[$DEPLOYED_VERSIONS_COUNTER]}
+    let DEPLOYED_VERSIONS_COUNTER=DEPLOYED_VERSIONS_COUNTER+1
+done
+
+echo "$LOG_MARK Deleting old versions"
+echo "$LOG_MARK Number of deployed versions: " ${#DEPLOYED_VERSIONS_LIST[*]}
+echo "$LOG_MARK Number of versions to keep:"      $NUMBER_OF_VERSIONS_TO_KEEP
+
+# Delete revisions, if necessary
+if [ $NUMBER_OF_VERSIONS_TO_KEEP -lt $DEPLOYED_VERSIONS_COUNTER ]; then
+  let VERSIONS_TO_DELETE=$DEPLOYED_VERSIONS_COUNTER-$NUMBER_OF_VERSIONS_TO_KEEP
+  echo "$LOG_MARK Need to delete" $VERSIONS_TO_DELETE" backups"
+  
+  # Delete from n-1 to 0
+  let VERSIONS_TO_DELETE=$VERSIONS_TO_DELETE-1
+  while [ $VERSIONS_TO_DELETE -ge 0 ]; do
+    VERSION=${DEPLOYED_VERSIONS_LIST[$VERSIONS_TO_DELETE]}
+    echo "$LOG_MARK Version to delete:" $VERSION
+    rm -rf $APS_DIR_ROOT$APP_NAME"/"$VERSION
+    if [ $? -ne 0 ]; then
+      echo "$LOG_MARK Error while deleting version"
+    else
+      echo "$LOG_MARK Version correctly deleted"
+    fi
+    let VERSIONS_TO_DELETE=VERSIONS_TO_DELETE-1
+  done
+else
+  echo "$LOG_MARK No need to delete old versions"
+fi
+
+# Creating directories
 echo "$LOG_MARK Creating temp dir: $TMP_DIR_NAME"
 mkdir $TMP_DIR_NAME
 mkdir $TMP_DIR_NAME"/trunk"
@@ -84,10 +127,12 @@ TMP_SVN_LOG=$TMP_DIR_ROOT"/svn_log.tmp"
 echo "Creating release directory: $NEW_RELEASE_DIR"
 mkdir $NEW_RELEASE_DIR
 
+# Code download
 echo "$LOG_MARK Downloading code from SVN repository"
 svn co "$SVN_REPO""/trunk" $TMP_DIR_NAME"/trunk" > "$TMP_SVN_LOG"
 svn co "$SVN_REPO""/config" $TMP_DIR_NAME"/config" > "$TMP_SVN_LOG"
 
+# Copying code and setting symlinks
 echo "$LOG_MARK Copying code to release directory"
 cp -rv $SOURCES_DIR* $NEW_RELEASE_DIR  > /dev/null
  
@@ -117,6 +162,7 @@ chown -h www-data:$OPERATION_USER $PORTAL_DIR
 chmod 774 -R $NEW_RELEASE_DIR
 chown -R www-data:$OPERATION_USER $NEW_RELEASE_DIR
 
+# Insert mark so the developers can see the revision number
 echo "$LOG_MARK Inserting revision line in drupal template footer"
 echo "$LOG_MARK Revision $REVISION_NUMER deployed on $LOG_MARK" >> $THEME_LINE
 
@@ -125,3 +171,4 @@ rm -rf $TMP_DIR_NAME
 
 echo "$LOG_MARK Done"
 exit 0
+
