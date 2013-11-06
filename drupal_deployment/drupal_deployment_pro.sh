@@ -105,11 +105,11 @@ fi
 echo "$LOG_MARK Checking if the last version is already present"
 RELEASE_ALREADY_PRESENT=$( $SSH_PREFIX "ls -al $APS_DIR_ROOT$APP_NAME | grep" "rev$REVISION_NUMER")
 
-# if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
-# 	echo "$LOG_MARK The latest revision is" $REVISION_NUMER "which is already present"
-# 	echo "$LOG_MARK Process aborted."
-# 	exit 0
-# fi
+if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
+	echo "$LOG_MARK The latest revision is" $REVISION_NUMER "which is already present"
+	echo "$LOG_MARK Process aborted."
+	exit 0
+fi
 
 echo "$LOG_MARK Creating temp dir:" $TMP_DIR_NAME
 $SSH_PREFIX mkdir $TMP_DIR_NAME
@@ -140,27 +140,25 @@ $SSH_PREFIX "rm -rf \`find $NEW_RELEASE_DIR/ -name '\.*'\` "
 echo "$LOG_MARK Checking that every hidden file was deleted"
 $SSH_PREFIX "find $NEW_RELEASE_DIR/ -name '\.*'"
 
-# echo "$LOG_MARK Deleting symlink pointing to the current version"
-# $SSH_PREFIX rm $PORTAL_DIR
+echo "$LOG_MARK Deleting symlink pointing to the current version"
+$SSH_PREFIX rm $PORTAL_DIR
 
-# echo "$LOG_MARK Symlinking the new release"
-# $SSH_PREFIX ln -s "$NEW_RELEASE_DIR" $PORTAL_DIR
+echo "$LOG_MARK Symlinking the new release"
+$SSH_PREFIX ln -s "$NEW_RELEASE_DIR" $PORTAL_DIR
 
-# echo "$LOG_MARK Symlinking the files folder from the resources directory"
-# $SSH_PREFIX ln -s "$RESOURCE_DIR""/files" "$PORTAL_DIR""/sites/default"
+echo "$LOG_MARK Symlinking the files folder from the resources directory"
+$SSH_PREFIX ln -s "$RESOURCE_DIR""/files" "$PORTAL_DIR""/sites/default"
 
-# echo "$LOG_MARK chown to www-data the new release directory and the symlink directory"
-# $ROOT_SSH_PREFIX "chown -h www-data:"$USER" $PORTAL_DIR ; chmod 774 -R $NEW_RELEASE_DIR ; chown -R www-data:"$USER" $NEW_RELEASE_DIR"
+echo "$LOG_MARK chown to www-data the new release directory and the symlink directory"
+$ROOT_SSH_PREFIX "chown -h www-data:"$USER" $PORTAL_DIR ; chmod 774 -R $NEW_RELEASE_DIR ; chown -R www-data:"$USER" $NEW_RELEASE_DIR"
 
 echo "$LOG_MARK Performing SVN Tag"
 DEPLOYMENT_TAG_MESSAGE="$LOG_MARK Production deployment of version $VERSION_NAME fixes #$REDMINE_ISSUE_NUMBER"
-echo "$DEPLOYMENT_TAG_MESSAGE"
-#$SSH_PREFIX svn copy "$SVN_REPO""/trunk@$REVISION_NUMER" "$SVN_REPO""/tags/$VERSION_NAME -m \"$DEPLOYMENT_TAG_MESSAGE\""
-#svn copy http://repositorio.inap.es/svn/DBCI/trunk@26 http://repositorio.inap.es/svn/DBCI/tags/1.2.1-fechas-contenido-rev26 -m "tag de la subida a PRO del 20131021 fixes #5128"
+echo "$LOG_MARK $DEPLOYMENT_TAG_MESSAGE"
+$SSH_PREFIX svn copy "$SVN_REPO/trunk@$REVISION_NUMER" "$SVN_REPO/tags/$VERSION_NAME -m \"$DEPLOYMENT_TAG_MESSAGE\""
 
-# echo "LOG_MARK Process completed, deleting temp files"
-# $SSH_PREFIX "rm -rf $TMP_DIR_NAME"
+echo "$LOG_MARK Process completed, deleting temp files"
+$SSH_PREFIX "rm -rf $TMP_DIR_NAME"
 
-
-# echo "LOG_MARK Done"
-# exit 0
+echo "$LOG_MARK Done"
+exit 0

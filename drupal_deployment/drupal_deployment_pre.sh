@@ -40,6 +40,7 @@ else
 	OPERATION_USER=${ARGS[2]}
 	THEME_LINE=${ARGS[3]}
 
+	echo "$LOG_MARK ----------------------------------------"
 	echo "$LOG_MARK Starting $APP_NAME automatic deployment"
 
 	echo "$LOG_MARK SVN_REPO" $SVN_REPO
