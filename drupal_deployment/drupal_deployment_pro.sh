@@ -9,10 +9,14 @@
 #  www.alvaroreig.com                                                      #
 #  https://github.com/alvaroreig                                           #
 #                                                                          #
+#  Return status:                                                          #
+#      0: correct                                                          #
+#			-1: incorrect Arguments 																						 #
+#     -2: current revision already deployed                                #
+#     -3: error while connecting to svn                                    #
 #                                                                          #
 # @todo                   																								 #
 # - relative symlinks																											 #
-# - Check errors while connecting to SVN 																	 #
 ############################################################################
 
 DATE=`date +%Y%m%d` 
@@ -32,7 +36,7 @@ ARGS=("$@")
 if [ ${#ARGS[*]} -lt 4 ]; then
   echo "Four arguments are needed"
   echo "Usage: bash drupal_deployment.sh [SVN_REPO] [APP_NAME] [USER] [SERVER]"
-  exit;
+  exit -1;
 else
 	SVN_REPO=${ARGS[0]}
 	APP_NAME=${ARGS[1]}
@@ -66,6 +70,11 @@ fi
 
 echo "$LOG_MARK Browsing repository revision number"
 REVISION_NUMER=$($SSH_PREFIX svn info $SVN_REPO |grep $REVISION_KEYWORD: |cut -c12-13)
+if [ -z "$REVISION_NUMER" ]; then
+  echo "$LOG_MARK Error while connecting to SVN, aborting."
+  $SSH_PREFIX "rm -rf $TMP_DIR_NAME"
+  exit -3
+fi
 echo "$LOG_MARK Revision number:" $REVISION_NUMER
 
 echo "$LOG_MARK Please insert the full version name, as in app_name-1.3.1-some-fixes-rev$REVISION_NUMER"
@@ -75,8 +84,8 @@ echo "The version name is: $VERSION_NAME"
 
 # Checking if the version name is in the expected form: app_name-varios-messages-rev70
 if [[ "$VERSION_NAME" != "$APP_NAME-"* ]] || [[ "$VERSION_NAME" != *"-rev"* ]] ; then
-	echo "novale"
-	exit 2
+	echo "Incorrect version name"
+	exit -1
 fi
 
 # Check if revision to be deployed is not the latest one
@@ -88,12 +97,12 @@ if [[ "$VERSION_NAME" != *rev$REVISION_NUMER* ]]; then
 
 	if [[ $REVISION_NUMER_INPUT == *[!0-9]* ]]; then
     echo "$LOG_MARK Incorrect revision format, aborting"
-    exit -2
+    exit -1
 	fi
 
 	if [[ $REVISION_NUMER_INPUT > $REVISION_NUMER ]]; then
 		echo "$LOG_MARK Revision greater than the last one, aborting"
-		exit -2
+		exit -1
 	fi
 
 	# Adjusting the desired revision number
@@ -101,13 +110,13 @@ if [[ "$VERSION_NAME" != *rev$REVISION_NUMER* ]]; then
 	echo "$LOG_MARK New revision number:" $REVISION_NUMER
 fi
 
-echo "$LOG_MARK Checking if the last version is already present"
+echo "$LOG_MARK Checking if the desired revision is already present"
 RELEASE_ALREADY_PRESENT=$( $SSH_PREFIX "ls -al $APS_DIR_ROOT$APP_NAME | grep" "rev$REVISION_NUMER")
 
 if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
 	echo "$LOG_MARK The latest revision is" $REVISION_NUMER "which is already present"
 	echo "$LOG_MARK Process aborted."
-	exit 0
+	exit -2
 fi
 
 echo "$LOG_MARK Creating temp dir:" $TMP_DIR_NAME
@@ -118,8 +127,11 @@ CONFIG_FILES_DIR=$TMP_DIR_NAME"/config"
 TMP_SVN_LOG=$TMP_DIR_NAME"/"svn_log.tmp
 
 echo "$LOG_MARK Downloading code from SVN repository"
+
 $SSH_PREFIX svn co "$SVN_REPO""/trunk@$REVISION_NUMER" $TMP_DIR_NAME"/trunk" "> $TMP_SVN_LOG"
+
 $SSH_PREFIX svn co "$SVN_REPO""/config@$REVISION_NUMER" $TMP_DIR_NAME"/config" "> $TMP_SVN_LOG"
+
 NEW_RELEASE_DIR=$APS_DIR_ROOT$APP_NAME"/$VERSION_NAME"
 echo "$LOG_MARK The new release will be stored in "$NEW_RELEASE_DIR
 
