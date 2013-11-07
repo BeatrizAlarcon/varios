@@ -35,7 +35,7 @@ ARGS=("$@")
 
 if [ ${#ARGS[*]} -lt 4 ]; then
   echo "Four arguments are needed"
-  echo "Usage: bash drupal_deployment.sh [SVN_REPO] [APP_NAME] [USER] [SERVER]"
+  echo "Usage: bash drupal_deployment_pro.sh [SVN_REPO] [APP_NAME] [USER] [SERVER]"
   exit -1;
 else
 	SVN_REPO=${ARGS[0]}
