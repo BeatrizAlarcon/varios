@@ -58,6 +58,7 @@ TMP_DIR_NAME=$TMP_DIR_ROOT$APP_NAME"-"$DATE"-"$TIMESTAMP
 PORTAL_DIR=$APS_DIR_ROOT$APP_NAME"/"$APP_NAME"-portal"
 RESOURCE_DIR=$APS_DIR_ROOT$APP_NAME"/"$APP_NAME"-resource"
 
+# Find out last SVN revision
 echo "$LOG_MARK Browsing repository revision number"
 REVISION_NUMER=`svn info $SVN_REPO |grep $REVISION_KEYWORD: |cut -c12-13`
 if [ $? -ne 0 ]; then
@@ -166,9 +167,6 @@ rm -rf `find $NEW_RELEASE_DIR/ -name '\.*'`
 
 echo "$LOG_MARK Checking that every hidden file was deleted"
 find $NEW_RELEASE_DIR/ -name '\.*'
-
-echo "$LOG_MARK Deleting temp dir"
-rm -rf $TMP_DIR_NAME
 
 # point app_symlink to the new version
 echo "$LOG_MARK Deleting symlink pointing to the current version"
