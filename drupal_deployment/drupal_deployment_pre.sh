@@ -9,6 +9,10 @@
 #  www.alvaroreig.com                                                      #
 #  https://github.com/alvaroreig                                           #
 #                                                                          #
+#  Return status:                                                          #
+#      0: correct                                                          #
+#     -1: last revision already deployed                                   #
+#     -2: error while connecting to svn                                    #
 #                                                                          #
 # @todo                                                                    #
 # - relative symlinks                                                      #
@@ -56,6 +60,12 @@ RESOURCE_DIR=$APS_DIR_ROOT$APP_NAME"/"$APP_NAME"-resource"
 
 echo "$LOG_MARK Browsing repository revision number"
 REVISION_NUMER=`svn info $SVN_REPO |grep $REVISION_KEYWORD: |cut -c12-13`
+if [ $? -ne 0 ]; then
+  echo "$LOG_MARK Error while connecting to SVN, aborting."
+  rm -rf $NEW_RELEASE_DIR
+  rm -rf $TMP_DIR_NAME
+  exit -2
+fi
 echo "$LOG_MARK Revision number: " $REVISION_NUMER
 
 NEW_RELEASE_DIR=$APS_DIR_ROOT$APP_NAME"/"$APP_NAME"-rev"$REVISION_NUMER
@@ -68,7 +78,7 @@ RELEASE_ALREADY_PRESENT=`ls -al $APS_DIR_ROOT$APP_NAME | grep $NEW_RELEASE_DIR`
 if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
 	echo "$LOG_MARK The latest revision is" $REVISION_NUMER "which is already present"
 	echo "Process aborted."
-	exit 0
+	exit -1
 fi
 
 
@@ -129,7 +139,20 @@ mkdir $NEW_RELEASE_DIR
 # Code download
 echo "$LOG_MARK Downloading code from SVN repository"
 svn co "$SVN_REPO""/trunk" $TMP_DIR_NAME"/trunk" > "$TMP_SVN_LOG"
+if [ $? -ne 0 ]; then
+  echo "$LOG_MARK Error while connecting to SVN, aborting."
+  rm -rf $NEW_RELEASE_DIR
+  rm -rf $TMP_DIR_NAME
+  exit -2
+fi
+
 svn co "$SVN_REPO""/config" $TMP_DIR_NAME"/config" > "$TMP_SVN_LOG"
+if [ $? -ne 0 ]; then
+  echo "$LOG_MARK Error while connecting to SVN, aborting."
+  rm -rf $NEW_RELEASE_DIR
+  rm -rf $TMP_DIR_NAME
+  exit -2
+fi
 
 # Copying code and setting symlinks
 echo "$LOG_MARK Copying code to release directory"
@@ -147,6 +170,7 @@ find $NEW_RELEASE_DIR/ -name '\.*'
 echo "$LOG_MARK Deleting temp dir"
 rm -rf $TMP_DIR_NAME
 
+# point app_symlink to the new version
 echo "$LOG_MARK Deleting symlink pointing to the current version"
 rm $PORTAL_DIR
 
@@ -170,4 +194,3 @@ rm -rf $TMP_DIR_NAME
 
 echo "$LOG_MARK Done"
 exit 0
-
