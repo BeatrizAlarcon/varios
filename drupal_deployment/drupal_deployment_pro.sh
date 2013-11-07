@@ -68,8 +68,18 @@ if [[ $REDMINE_ISSUE_NUMBER == *[!0-9]* ]]; then
 	exit -1
 fi
 
+# 'Unorthodox' Fix. While using SSH to issue svn commands in a remote server, when the user types the password it was shown
+# in the screen. To solve this, the script takes the credentials here hiding it with "read -s"
+echo "$LOG_MARK Please insert your SVN username"
+read -p "Username:"
+SVN_USERNAME=$REPLY
+
+echo "$LOG_MARK Please insert your SVN password"
+read -s SVN_PASSWORD
+
+# Find out last SVN revision
 echo "$LOG_MARK Browsing repository revision number"
-REVISION_NUMER=$($SSH_PREFIX svn info $SVN_REPO |grep $REVISION_KEYWORD: |cut -c12-13)
+REVISION_NUMER=$($SSH_PREFIX svn info --username="$SVN_USERNAME" --password="$SVN_PASSWORD" $SVN_REPO |grep $REVISION_KEYWORD: |cut -c12-13)
 if [ -z "$REVISION_NUMER" ]; then
   echo "$LOG_MARK Error while connecting to SVN, aborting."
   $SSH_PREFIX "rm -rf $TMP_DIR_NAME"
@@ -77,6 +87,7 @@ if [ -z "$REVISION_NUMER" ]; then
 fi
 echo "$LOG_MARK Revision number:" $REVISION_NUMER
 
+# Ask for the deployment version
 echo "$LOG_MARK Please insert the full version name, as in 1.3.1-some-fixes-rev$REVISION_NUMER"
 read -p "name: "
 VERSION_NAME=$REPLY
@@ -89,18 +100,20 @@ if [[ "$VERSION_NAME" != *"-rev"* ]] ; then
 	exit -1
 fi
 
-# Check if revision to be deployed is not the latest one
+# Check if the revision to be deployed is not the latest one
 if [[ "$VERSION_NAME" != *rev$REVISION_NUMER* ]]; then
 	echo "$LOG_MARK It seems that the revision number doesn't match the latest revision in the repository."
 	echo "$LOG_MARK Please insert the revision number that you want to deploy"
 	read -p "Revision number: "
 	REVISION_NUMER_INPUT=$REPLY
 
+	# Wrong format
 	if [[ $REVISION_NUMER_INPUT == *[!0-9]* ]]; then
     echo "$LOG_MARK Incorrect revision format, aborting"
     exit -1
 	fi
 
+	# Can't be greater than the last one
 	if [[ $REVISION_NUMER_INPUT > $REVISION_NUMER ]]; then
 		echo "$LOG_MARK Revision greater than the last one, aborting"
 		exit -1
@@ -111,6 +124,7 @@ if [[ "$VERSION_NAME" != *rev$REVISION_NUMER* ]]; then
 	echo "$LOG_MARK New revision number:" $REVISION_NUMER
 fi
 
+# Check if that revision is already deployed
 echo "$LOG_MARK Checking if the desired revision is already present"
 RELEASE_ALREADY_PRESENT=$( $SSH_PREFIX "ls -al $APS_DIR_ROOT$APP_NAME | grep" "rev$REVISION_NUMER")
 
@@ -120,6 +134,7 @@ if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
 	exit -2
 fi
 
+# Create temp dir
 echo "$LOG_MARK Creating temp dir:" $TMP_DIR_NAME
 $SSH_PREFIX mkdir $TMP_DIR_NAME
 $SSH_PREFIX mkdir $TMP_DIR_NAME"/trunk"
@@ -127,48 +142,51 @@ SOURCES_DIR=$TMP_DIR_NAME"/trunk/"
 CONFIG_FILES_DIR=$TMP_DIR_NAME"/config"
 TMP_SVN_LOG=$TMP_DIR_NAME"/"svn_log.tmp
 
+# Code download
 echo "$LOG_MARK Downloading code from SVN repository"
+$SSH_PREFIX svn co --username="$SVN_USERNAME" --password="$SVN_PASSWORD" "$SVN_REPO""/trunk@$REVISION_NUMER" $TMP_DIR_NAME"/trunk" "> $TMP_SVN_LOG"
+$SSH_PREFIX svn co --username="$SVN_USERNAME" --password="$SVN_PASSWORD" "$SVN_REPO""/config@$REVISION_NUMER" $TMP_DIR_NAME"/config" "> $TMP_SVN_LOG"
 
-$SSH_PREFIX svn co "$SVN_REPO""/trunk@$REVISION_NUMER" $TMP_DIR_NAME"/trunk" "> $TMP_SVN_LOG"
-
-$SSH_PREFIX svn co "$SVN_REPO""/config@$REVISION_NUMER" $TMP_DIR_NAME"/config" "> $TMP_SVN_LOG"
-
+# Create release directory
 NEW_RELEASE_DIR=$APS_DIR_ROOT$APP_NAME"/$VERSION_NAME"
 echo "$LOG_MARK The new release will be stored in "$NEW_RELEASE_DIR
-
-
 echo "$LOG_MARK Creating release directory: " $NEW_RELEASE_DIR
 $SSH_PREFIX mkdir $NEW_RELEASE_DIR
 
+# Copying code to release directory
 echo "$LOG_MARK Copying code to release directory"
 $SSH_PREFIX "cp -rv $SOURCES_DIR* $NEW_RELEASE_DIR">/tmp/copia.log
-
 echo "$LOG_MARK Copying configuration file (PRO)"
 $SSH_PREFIX cp -rv "$CONFIG_FILES_DIR""/config_files/pro/settings.php" "$NEW_RELEASE_DIR""/sites/default/settings.php"
 
+# Cleaning up .svn folders (and in the case of lazy developers, IDE related files)
 echo "$LOG_MARK Deleting hidden files in release directory"
 $SSH_PREFIX "rm -rf \`find $NEW_RELEASE_DIR/ -name '\.*'\` "
-
 echo "$LOG_MARK Checking that every hidden file was deleted"
 $SSH_PREFIX "find $NEW_RELEASE_DIR/ -name '\.*'"
 
+# Symlinking to the new version"
 echo "$LOG_MARK Deleting symlink pointing to the current version"
 $SSH_PREFIX rm $PORTAL_DIR
-
 echo "$LOG_MARK Symlinking the new release"
 $SSH_PREFIX ln -s "$NEW_RELEASE_DIR" $PORTAL_DIR
 
+# Symlinking static resources ( /sites/default/files folder)
 echo "$LOG_MARK Symlinking the files folder from the resources directory"
 $SSH_PREFIX ln -s "$RESOURCE_DIR""/files" "$PORTAL_DIR""/sites/default"
 
+
+# Chown to apache user
 echo "$LOG_MARK chown to www-data the new release directory and the symlink directory"
 $ROOT_SSH_PREFIX "chown -h www-data:"$USER" $PORTAL_DIR ; chmod 774 -R $NEW_RELEASE_DIR ; chown -R www-data:"$USER" $NEW_RELEASE_DIR"
 
+# SVN tag the new release, linking the commit to redmine issue
 echo "$LOG_MARK Performing SVN Tag"
 DEPLOYMENT_TAG_MESSAGE="$LOG_MARK Production deployment of version $VERSION_NAME fixes #$REDMINE_ISSUE_NUMBER"
 echo "$LOG_MARK $DEPLOYMENT_TAG_MESSAGE"
 $SSH_PREFIX svn copy "$SVN_REPO/trunk@$REVISION_NUMER" "$SVN_REPO/tags/$VERSION_NAME -m \"$DEPLOYMENT_TAG_MESSAGE\""
 
+# Deleting temp directory
 echo "$LOG_MARK Process completed, deleting temp files"
 $SSH_PREFIX "rm -rf $TMP_DIR_NAME"
 
