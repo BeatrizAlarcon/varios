@@ -77,13 +77,14 @@ if [ -z "$REVISION_NUMER" ]; then
 fi
 echo "$LOG_MARK Revision number:" $REVISION_NUMER
 
-echo "$LOG_MARK Please insert the full version name, as in app_name-1.3.1-some-fixes-rev$REVISION_NUMER"
+echo "$LOG_MARK Please insert the full version name, as in 1.3.1-some-fixes-rev$REVISION_NUMER"
 read -p "name: "
 VERSION_NAME=$REPLY
+VERSION_NAME="$APP_NAME-$VERSION_NAME"
 echo "The version name is: $VERSION_NAME"
 
 # Checking if the version name is in the expected form: app_name-varios-messages-rev70
-if [[ "$VERSION_NAME" != "$APP_NAME-"* ]] || [[ "$VERSION_NAME" != *"-rev"* ]] ; then
+if [[ "$VERSION_NAME" != *"-rev"* ]] ; then
 	echo "Incorrect version name"
 	exit -1
 fi
