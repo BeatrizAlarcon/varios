@@ -10,9 +10,9 @@
 #  https://github.com/alvaroreig                                           #
 #                                                                          #
 #                                                                          #
-# @todo                   
-# - manage the maintenance virtualhost                                     #
-# - relative symlinks
+# @todo                   																								 #
+# - relative symlinks																											 #
+# - Check errors while connecting to SVN 																	 #
 ############################################################################
 
 DATE=`date +%Y%m%d` 

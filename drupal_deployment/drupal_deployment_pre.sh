@@ -11,9 +11,8 @@
 #                                                                          #
 #                                                                          #
 # @todo                                                                    #
-# - relative symlinks
-# - delete old versions
-# - deploymento to pre/pro environment 
+# - relative symlinks                                                      #
+# - Check errors while connecting to SVN                                   #
 ############################################################################
 
 DATE=`date +%Y%m%d` 
@@ -33,7 +32,7 @@ ARGS=("$@")
 
 if [ ${#ARGS[*]} -lt 4 ]; then
   echo "$LOG_MARK Four arguments are needed"
-  echo "$LOG_MARK Usage: bash drupal_deployment.sh [SVN_REPO] [APP_NAME] [OPERATION_USER] [THEME_FILE]"
+  echo "$LOG_MARK Usage: bash drupal_deployment_pre.sh [SVN_REPO] [APP_NAME] [OPERATION_USER] [THEME_FILE]"
   exit;
 else
 	SVN_REPO=${ARGS[0]}
