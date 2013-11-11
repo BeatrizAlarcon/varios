@@ -184,7 +184,7 @@ $ROOT_SSH_PREFIX "chown -h www-data:"$USER" $PORTAL_DIR ; chmod 774 -R $NEW_RELE
 echo "$LOG_MARK Performing SVN Tag"
 DEPLOYMENT_TAG_MESSAGE="$LOG_MARK Production deployment of version $VERSION_NAME fixes #$REDMINE_ISSUE_NUMBER"
 echo "$LOG_MARK $DEPLOYMENT_TAG_MESSAGE"
-$SSH_PREFIX svn copy "$SVN_REPO/trunk@$REVISION_NUMER" "$SVN_REPO/tags/$VERSION_NAME -m \"$DEPLOYMENT_TAG_MESSAGE\""
+$SSH_PREFIX svn copy --username="$SVN_USERNAME" --password="$SVN_PASSWORD" "$SVN_REPO/trunk@$REVISION_NUMER" "$SVN_REPO/tags/$VERSION_NAME -m \"$DEPLOYMENT_TAG_MESSAGE\""
 
 # Deleting temp directory
 echo "$LOG_MARK Process completed, deleting temp files"
