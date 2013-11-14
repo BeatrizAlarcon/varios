@@ -1,1 +1,129 @@
-/home/larry/scripts/conkyrc
+######################
+# - Conky settings - #
+######################
+update_interval 1
+total_run_times 0
+net_avg_samples 1
+cpu_avg_samples 1
+if_up_strictness link
+
+imlib_cache_size 0
+double_buffer yes
+#no_buffers yes
+
+format_human_readable
+
+#####################
+# - Text settings - #
+#####################
+use_xft yes
+xftfont Ubuntu:size=8
+override_utf8_locale yes
+text_buffer_size 2048
+
+#############################
+# - Window specifications - #
+#############################
+own_window yes
+own_window_class Conky
+own_window_type dock
+own_window_transparent yes
+own_window_hints undecorated,below,sticky,skip_taskbar,skip_pager
+
+#own_window_class normal
+#own_window yes
+#own_window_transparent yes
+#own_window_hints undecorated,below,sticky,skip_taskbar,skip_pager
+#own_window_type desktop #importante para que al minimizar se quede
+#own_window_type panel #importante para que al minimizar se quede
+
+
+#alignment top_right
+gap_x 1450
+gap_y 20
+#minimum_size 182 700
+#maximum_width 182
+
+default_bar_size 60 8
+
+#########################
+# - Graphics settings - #
+#########################
+draw_shades no
+
+#default_color white
+#color0 87CF3E
+default_color D6D6D6
+
+color0 F2F2F2
+color1 7296BB
+color2 FFFFFF
+color3 7296BB
+
+TEXT
+#Reloj y calendario #
+${alignc 35}${font Arial Black:size=26}${time %H:%M}${font} 
+#${voffset 6}${alignc}${time %d %B %Y}${voffset -6}
+#${voffset -2}${color0}${font Poky:size=22}D${font}${voffset -12}${font Ubuntu:style=Bold:size=7}${offset -17}${voffset 4}${time %d}${font}${color}${voffset -1}${font Monospace:size=7}${execpi 300 DJS=`date +%_d`; ncal -MCh|sed '2,8!d'| sed '/./!d' | sed 's/^/${goto 42} /'| sed 's/$/ /' | sed 's/^/ /' | sed /" $DJS "/s/" $DJS "/" "'${font Arial:style=Bold:size=8}${voffset -2}${offset -4}${color1} '"$DJS"'${color}${font Monospace:size=7}'" "/}${voffset -1}
+#${voffset -22}
+
+#Sistema
+SISTEMA ${hr 2}
+${color0}${font openlogos:size=14}2${font}${color}${goto 32}${voffset -8}Kernel:  ${alignr}${color2}${kernel}${color}
+${goto 32}Uptime: ${alignr}${color2}${uptime}${color}
+${goto 32}Actualizaciones: ${alignr}${font Ubuntu:style=Bold:size=8}${color1}${execi 360 aptitude search "~U" | wc -l | tail}${color}${font} ${color2}Paquetes${color}
+
+#CPU y memoria
+RENDIMIENTO ${hr 2}
+${font StyleBats:size=18}A${font} CPU total $alignr ${cpu cpu0}% 
+${cpugraph cpu0 eeeeee 7296BB}
+${font StyleBats:size=18}A${font} CPU 1 ${alignr}${cpubar cpu1 12,60}
+${font StyleBats:size=18}A${font} CPU 2 ${alignr}${cpubar cpu2 12,60}
+${font StyleBats:size=18}A${font} CPU 3 ${alignr}${cpubar cpu3 12,60}
+${font StyleBats:size=18}A${font} CPU 4 ${alignr}${cpubar cpu4 12,60}
+${font StyleBats:size=16}g${font} RAM $alignc $mem / $memmax $alignr $membar
+
+#TEMPERATURAS ${hr 2}
+#${font weather:size=24}y${font} CPU $alignr ${execi 5 sensors |grep "CPU Temperature"|cut -c23-24 } C
+#${font weather:size=24}y${font} Nvidia $alignr ${execi 5 nvidia-settings -q GPUCoreTemp|grep Attribute|cut -c44-45
+#} C
+#${font weather:size=24}y${font} sda $alignr ${execi 5 nc localhost 7634 | cut -c23-24 } C
+#${font weather:size=24}y${font} sdb $alignr ${execi 5 nc localhost 7634 | cut -c51-52 } C
+#
+
+#Procesos por CPU y por RAM
+PROCESOS${hr 2}
+${font PizzaDude Bullets:size=16}N${font} ${color}Por CPU%
+${color} ${top name 1} $alignr ${top cpu 1}
+${color} ${top name 2} $alignr ${top cpu 2}
+${color} ${top name 3} $alignr ${top cpu 3}
+${font PizzaDude Bullets:size=16}O${font} ${color}Por RAM:
+${color} ${top_mem name 1}$alignr ${top_mem mem_res 1}
+${color} ${top_mem name 2}$alignr ${top_mem mem_res 2}
+${color} ${top_mem name 3}$alignr ${top_mem mem_res 3}
+#
+
+#Espacio en disco
+DISCOS${hr 2}
+${font Pie charts for maps:size=14}7${font} / $alignc ${fs_used /} / ${fs_size /} $alignr ${fs_free_perc /}%
+${fs_bar /}
+${font Pie charts for maps:size=14}7${font} home $alignc ${fs_used /home/} / ${fs_size /home/} $alignr ${fs_used_perc /home/}%
+${fs_bar /home/}
+${font Pie charts for maps:size=14}7${font} 400gb $alignc ${fs_used /media/400gb} / ${fs_size /media/400gb} $alignr ${fs_used_perc /media/400gb}%
+${fs_bar /media/400gb}
+
+#Red
+RED${hr 2}
+# |--ETH0
+${voffset 2}${color0}${font Webdings:size=17}“${font}${color}${goto 32}${voffset -5}Descarga: ${font Ubuntu:style=Bold:size=8}${color1}${downspeed eth0}${color}${font} ${alignr}${color2}${downspeedgraph eth0 8,60 7296BB 7296BB}${color}
+${goto 32}Total: ${font Ubuntu:style=Bold:size=8}${color2}${totaldown eth0}${color}${font}
+${voffset -5}${color0}${font Webdings:size=17}”${font}${color}${goto 32}${voffset -5}Subida: ${font Ubuntu:style=Bold:size=8}${color1}${upspeed eth0}${color}${font} ${alignr}${color2}${upspeedgraph eth0 8,60 7296BB 7296BB}${color}
+${goto 32}Total: ${font Ubuntu:style=Bold:size=8}${color2}${totalup eth0}${color}${font}
+${voffset 2}${color0}${font Webdings:size=16}¬${font}${color}${goto 32}${voffset -4}IP Local: ${alignr}${color2}${addr eth0}${color}
+${goto 32}IP Pública: ${alignr}${color2}${execi 3600 sh /home/larry/scripts/myip.sh}
+
+#Raspberry pi
+RPI${hr 2}
+${font Webdings:size=20}¬${font} $alignc Estado $alignr ${color1} ${execi 60 sh /home/larry/scripts/check_server.sh 192.168.1.3}${color}${font}
+${font Pie charts for maps:size=14}7${font} $alignc ${fs_used /media/pi_1tb} / ${fs_size /media/pi_1tb} $alignr ${fs_used_perc /media/pi_1tb}%
+${font Pie charts for maps:size=14}7${font} $alignc ${fs_used /media/pi_2tb} / ${fs_size /media/pi_2tb} $alignr ${fs_used_perc /media/pi_2tb}%
