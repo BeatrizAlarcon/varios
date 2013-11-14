@@ -6,12 +6,13 @@
 # frecuency of full backups.It accepts at least one source directory and a #
 # single destination directory as arguments. Usage:                        #
 #                                                                          #
-# incremental_backup.sh SOURCE_DIRECTORY_1 [SOURCE_DIRECTORY_2..N]  			 #
+# incremental_backup.sh SOURCE_DIRECTORY_1 [SOURCE_DIRECTORY_2..N]  	   #
 #       DESTINATION_DIRECTORY                                              #
+# todo: check if the log file exists. rotate
 #                                                                          #
 #                                                                          #
 #  Author: Álvaro Reig González                                            #
-#  Licence: GNU GLPv3                                                      #                                                     #
+#  Licence: GNU GLPv3                                                      #    
 #  www.alvaroreig.com                                                      #
 #  https://github.com/alvaroreig                                           #
 ############################################################################
@@ -25,7 +26,8 @@ BACKUPS_TO_KEEP=21
 EXCLUSSIONS="--exclude .cache/ --exclude .thumbnails/ --exclude .gvfs"
 OPTIONS="-h -ab --stats"
 #To test the script, include "-n" to perform a 'dry' rsync
-LOG=/var/log/backup.log
+LOG=/tmp/rsync.log
+NOTIFY=true
 
 ############################################################################
 # Arguments processing. The last argument is the destination directory, the#
@@ -58,6 +60,9 @@ else
   echo "" >> $LOG
   echo "" >> $LOG
   echo "[" `date +%Y-%m-%d_%R` "]" "###### Starting backup #######" >> $LOG
+  if $NOTIFY ; then
+    notify-send "Starting backup"
+  fi
   echo "[" `date +%Y-%m-%d_%R` "]" "Directories to backup"  $SOURCE_DIRS >> $LOG
   echo "[" `date +%Y-%m-%d_%R` "]" "Destination directory"  $DEST_DIR >> $LOG
   echo "[" `date +%Y-%m-%d_%R` "]" "Limit to full backup:"  $FULL_BACKUP_LIMIT >> $LOG
@@ -139,9 +144,15 @@ done
 
 if [ $NEXT_BACKUP_FULL == true ]; then
 	echo "[" `date +%Y-%m-%d_%R` "]" "The backup will be full" >> $LOG
+  if $NOTIFY ; then
+    notify-send "The backup will be full"
+  fi
 	rsync $OPTIONS $EXCLUSSIONS $SOURCE_DIRS $DEST_DIR/$FULL_BACKUP_STRING  >> $LOG
 else
   echo "[" `date +%Y-%m-%d_%R` "]" "The backup will be incremental" >> $LOG
+  if $NOTIFY ; then
+    notify-send "The backup will be incremental"
+  fi
 	rsync $OPTIONS $EXCLUSSIONS --link-dest=$DEST_DIR/$LAST_FULL_BACKUP $SOURCE_DIRS $DEST_DIR/$INC_BACKUP_STRING >> $LOG
   $COM >> $LOG
 fi
@@ -152,10 +163,16 @@ fi
 
 if [ $? -ne 0 ]; then
 	echo "[" `date +%Y-%m-%d_%R` "]" "####### Error during the backup. Please execute the script with the -v flag #######" >> $LOG
+  if $NOTIFY ; then
+    notify-send "Error during the backup"
+  fi
   echo "" >> $LOG
   echo "" >> $LOG
 else
 	echo "[" `date +%Y-%m-%d_%R` "]" "####### Backup correct #######" >> $LOG
+  if $NOTIFY ; then
+    notify-send "Backup correct"
+  fi
   echo "" >> $LOG
   echo "" >> $LOG
 fi
