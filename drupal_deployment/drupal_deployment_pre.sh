@@ -24,12 +24,20 @@ TIMESTAMP=`date +%y%m%d%H%M%S`
 LOG_MARK=`date +%Y-%m-%d_%R`
 TMP_DIR_ROOT="/tmp/"
 APS_DIR_ROOT="/opt/"
-REVISION_KEYWORD="Revisión"
+REVISION_KEYWORD="Revisión:"
 NUMBER_OF_VERSIONS_TO_KEEP="5"
 
 
+
+ # Function to find out if a string contains a substring
+  strindex() { 
+    x="${1%%$2*}"
+    [[ $x = $1 ]] && echo -1 || echo ${#x}
+  }
+
+
 ############################################################################
-# Arguments processing.													   												 #
+# Arguments processing.                                                    #
 ############################################################################
 
 ARGS=("$@")
@@ -39,18 +47,18 @@ if [ ${#ARGS[*]} -lt 4 ]; then
   echo "$LOG_MARK Usage: bash drupal_deployment_pre.sh [SVN_REPO] [APP_NAME] [OPERATION_USER] [THEME_FILE]"
   exit;
 else
-	SVN_REPO=${ARGS[0]}
-	APP_NAME=${ARGS[1]}
-	OPERATION_USER=${ARGS[2]}
-	THEME_LINE=${ARGS[3]}
+  SVN_REPO=${ARGS[0]}
+  APP_NAME=${ARGS[1]}
+  OPERATION_USER=${ARGS[2]}
+  THEME_LINE=${ARGS[3]}
 
-	echo "$LOG_MARK ----------------------------------------"
-	echo "$LOG_MARK Starting $APP_NAME automatic deployment"
+  echo "$LOG_MARK ----------------------------------------"
+  echo "$LOG_MARK Starting $APP_NAME automatic deployment"
 
-	echo "$LOG_MARK SVN_REPO" $SVN_REPO
-	echo "$LOG_MARK APP_NAME" $APP_NAME
-	echo "$LOG_MARK OPERATION_USER" $OPERATION_USER
-	echo "$LOG_MARK THEME_LINE" $THEME_LINE
+  echo "$LOG_MARK SVN_REPO" $SVN_REPO
+  echo "$LOG_MARK APP_NAME" $APP_NAME
+  echo "$LOG_MARK OPERATION_USER" $OPERATION_USER
+  echo "$LOG_MARK THEME_LINE" $THEME_LINE
 fi
 
 TMP_DIR_NAME=$TMP_DIR_ROOT$APP_NAME"-"$DATE"-"$TIMESTAMP
@@ -60,16 +68,23 @@ RESOURCE_DIR=$APS_DIR_ROOT$APP_NAME"/"$APP_NAME"-resource"
 
 # Find out last SVN revision
 echo "$LOG_MARK Browsing repository revision number"
-REVISION_NUMER=`svn info $SVN_REPO |grep $REVISION_KEYWORD: |cut -c12-13`
+REVISION_NUMBER_OUTPUT=`svn info $SVN_REPO | grep "$REVISION_KEYWORD"`
+
 if [ $? -ne 0 ]; then
   echo "$LOG_MARK Error while connecting to SVN, aborting."
   rm -rf $NEW_RELEASE_DIR
   rm -rf $TMP_DIR_NAME
   exit -2
 fi
-echo "$LOG_MARK Revision number: " $REVISION_NUMER
 
-NEW_RELEASE_DIR=$APS_DIR_ROOT$APP_NAME"/"$APP_NAME"-rev"$REVISION_NUMER
+# Processing the info received from SVN
+REVISION_NUMBER_OUTPUT_LENGTH=${#REVISION_NUMBER_OUTPUT}
+REVISION_NUMBER_START=`strindex "$REVISION_NUMBER_OUTPUT" ":"`
+let REVISION_NUMBER_START=$REVISION_NUMBER_START+4
+REVISION_NUMBER=`echo $REVISION_NUMBER_OUTPUT | cut -c$REVISION_NUMBER_START-$REVISION_NUMBER_LENGTH`
+echo "$LOG_MARK Revision number: " $REVISION_NUMBER
+
+NEW_RELEASE_DIR=$APS_DIR_ROOT$APP_NAME"/"$APP_NAME"-rev"$REVISION_NUMBER
 
 # Check if the latest revision is already deployed
 echo "$LOG_MARK Checking if the last revision is already present"
