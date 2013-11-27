@@ -37,7 +37,7 @@ NUMBER_OF_VERSIONS_TO_KEEP="5"
 
 
 ############################################################################
-# Arguments processing.                                                    #
+# Arguments processing.													   												 #
 ############################################################################
 
 ARGS=("$@")
@@ -47,18 +47,18 @@ if [ ${#ARGS[*]} -lt 4 ]; then
   echo "$LOG_MARK Usage: bash drupal_deployment_pre.sh [SVN_REPO] [APP_NAME] [OPERATION_USER] [THEME_FILE]"
   exit;
 else
-  SVN_REPO=${ARGS[0]}
-  APP_NAME=${ARGS[1]}
-  OPERATION_USER=${ARGS[2]}
-  THEME_LINE=${ARGS[3]}
+	SVN_REPO=${ARGS[0]}
+	APP_NAME=${ARGS[1]}
+	OPERATION_USER=${ARGS[2]}
+	THEME_LINE=${ARGS[3]}
 
-  echo "$LOG_MARK ----------------------------------------"
-  echo "$LOG_MARK Starting $APP_NAME automatic deployment"
+	echo "$LOG_MARK ----------------------------------------"
+	echo "$LOG_MARK Starting $APP_NAME automatic deployment"
 
-  echo "$LOG_MARK SVN_REPO" $SVN_REPO
-  echo "$LOG_MARK APP_NAME" $APP_NAME
-  echo "$LOG_MARK OPERATION_USER" $OPERATION_USER
-  echo "$LOG_MARK THEME_LINE" $THEME_LINE
+	echo "$LOG_MARK SVN_REPO" $SVN_REPO
+	echo "$LOG_MARK APP_NAME" $APP_NAME
+	echo "$LOG_MARK OPERATION_USER" $OPERATION_USER
+	echo "$LOG_MARK THEME_LINE" $THEME_LINE
 fi
 
 TMP_DIR_NAME=$TMP_DIR_ROOT$APP_NAME"-"$DATE"-"$TIMESTAMP
@@ -92,7 +92,7 @@ RELEASE_ALREADY_PRESENT=`ls -al $APS_DIR_ROOT$APP_NAME | grep $NEW_RELEASE_DIR`
 
 
 if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
-	echo "$LOG_MARK The latest revision is" $REVISION_NUMER "which is already present"
+	echo "$LOG_MARK The latest revision is" $REVISION_NUMBER "which is already present"
 	echo "Process aborted."
 	exit -1
 fi
@@ -200,7 +200,7 @@ chown -R www-data:$OPERATION_USER $NEW_RELEASE_DIR
 
 # Insert mark so the developers can see the revision number
 echo "$LOG_MARK Inserting revision line in drupal template footer"
-echo "$LOG_MARK Revision $REVISION_NUMER deployed on $LOG_MARK" >> $THEME_LINE
+echo "$LOG_MARK Revision $REVISION_NUMBER deployed on $LOG_MARK" >> $THEME_LINE
 
 echo "$LOG_MARK Process completed, deleting temp files"
 rm -rf $TMP_DIR_NAME
