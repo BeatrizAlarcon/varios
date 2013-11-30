@@ -24,8 +24,16 @@ TIMESTAMP=`date +%y%m%d%H%M%S`
 LOG_MARK=`date +%Y-%m-%d_%R`
 TMP_DIR_ROOT="/tmp/"
 APS_DIR_ROOT="/opt/"
-REVISION_KEYWORD="Revisión"
+REVISION_KEYWORD="Revisión:"
 NUMBER_OF_VERSIONS_TO_KEEP="5"
+
+
+
+ # Function to find out if a string contains a substring
+  strindex() { 
+    x="${1%%$2*}"
+    [[ $x = $1 ]] && echo -1 || echo ${#x}
+  }
 
 
 ############################################################################
@@ -60,16 +68,23 @@ RESOURCE_DIR=$APS_DIR_ROOT$APP_NAME"/"$APP_NAME"-resource"
 
 # Find out last SVN revision
 echo "$LOG_MARK Browsing repository revision number"
-REVISION_NUMER=`svn info $SVN_REPO |grep $REVISION_KEYWORD: |cut -c12-13`
+REVISION_NUMBER_OUTPUT=`svn info $SVN_REPO | grep "$REVISION_KEYWORD"`
+
 if [ $? -ne 0 ]; then
   echo "$LOG_MARK Error while connecting to SVN, aborting."
   rm -rf $NEW_RELEASE_DIR
   rm -rf $TMP_DIR_NAME
   exit -2
 fi
-echo "$LOG_MARK Revision number: " $REVISION_NUMER
 
-NEW_RELEASE_DIR=$APS_DIR_ROOT$APP_NAME"/"$APP_NAME"-rev"$REVISION_NUMER
+# Processing the info received from SVN
+REVISION_NUMBER_OUTPUT_LENGTH=${#REVISION_NUMBER_OUTPUT}
+REVISION_NUMBER_START=`strindex "$REVISION_NUMBER_OUTPUT" ":"`
+let REVISION_NUMBER_START=$REVISION_NUMBER_START+4
+REVISION_NUMBER=`echo $REVISION_NUMBER_OUTPUT | cut -c$REVISION_NUMBER_START-$REVISION_NUMBER_LENGTH`
+echo "$LOG_MARK Revision number: " $REVISION_NUMBER
+
+NEW_RELEASE_DIR=$APS_DIR_ROOT$APP_NAME"/"$APP_NAME"-rev"$REVISION_NUMBER
 
 # Check if the latest revision is already deployed
 echo "$LOG_MARK Checking if the last revision is already present"
@@ -77,7 +92,7 @@ RELEASE_ALREADY_PRESENT=`ls -al $APS_DIR_ROOT$APP_NAME | grep $NEW_RELEASE_DIR`
 
 
 if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
-	echo "$LOG_MARK The latest revision is" $REVISION_NUMER "which is already present"
+	echo "$LOG_MARK The latest revision is" $REVISION_NUMBER "which is already present"
 	echo "Process aborted."
 	exit -1
 fi
@@ -185,7 +200,7 @@ chown -R www-data:$OPERATION_USER $NEW_RELEASE_DIR
 
 # Insert mark so the developers can see the revision number
 echo "$LOG_MARK Inserting revision line in drupal template footer"
-echo "$LOG_MARK Revision $REVISION_NUMER deployed on $LOG_MARK" >> $THEME_LINE
+echo "$LOG_MARK Revision $REVISION_NUMBER deployed on $LOG_MARK" >> $THEME_LINE
 
 echo "$LOG_MARK Process completed, deleting temp files"
 rm -rf $TMP_DIR_NAME

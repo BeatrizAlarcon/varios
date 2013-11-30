@@ -24,8 +24,13 @@ TIMESTAMP=`date +%y%m%d%H%M%S`
 LOG_MARK=`date +%Y-%m-%d_%R`
 TMP_DIR_ROOT="/tmp/"
 APS_DIR_ROOT="/opt/"
-REVISION_KEYWORD="Revisión"
+REVISION_KEYWORD="Revisión:"
 
+ # Function to find out if a string contains a substring
+  strindex() { 
+    x="${1%%$2*}"
+    [[ $x = $1 ]] && echo -1 || echo ${#x}
+  }
 
 ############################################################################
 # Arguments processing.													   												 #
@@ -79,16 +84,24 @@ read -s SVN_PASSWORD
 
 # Find out last SVN revision
 echo "$LOG_MARK Browsing repository revision number"
-REVISION_NUMER=$($SSH_PREFIX svn info --username="$SVN_USERNAME" --password="$SVN_PASSWORD" $SVN_REPO |grep $REVISION_KEYWORD: |cut -c12-13)
-if [ -z "$REVISION_NUMER" ]; then
+REVISION_NUMBER_OUTPUT=`svn info $SVN_REPO | grep "$REVISION_KEYWORD"`
+
+if [ $? -ne 0 ]; then
   echo "$LOG_MARK Error while connecting to SVN, aborting."
-  $SSH_PREFIX "rm -rf $TMP_DIR_NAME"
-  exit -3
+  rm -rf $NEW_RELEASE_DIR
+  rm -rf $TMP_DIR_NAME
+  exit -2
 fi
-echo "$LOG_MARK Revision number:" $REVISION_NUMER
+
+# Processing the info received from SVN
+REVISION_NUMBER_OUTPUT_LENGTH=${#REVISION_NUMBER_OUTPUT}
+REVISION_NUMBER_START=`strindex "$REVISION_NUMBER_OUTPUT" ":"`
+let REVISION_NUMBER_START=$REVISION_NUMBER_START+4
+REVISION_NUMBER=`echo $REVISION_NUMBER_OUTPUT | cut -c$REVISION_NUMBER_START-$REVISION_NUMBER_LENGTH`
+echo "$LOG_MARK Revision number: " $REVISION_NUMBER
 
 # Ask for the deployment version
-echo "$LOG_MARK Please insert the full version name, as in 1.3.1-some-fixes-rev$REVISION_NUMER"
+echo "$LOG_MARK Please insert the full version name, as in 1.3.1-some-fixes-rev$REVISION_NUMBER"
 read -p "name: "
 VERSION_NAME=$REPLY
 VERSION_NAME="$APP_NAME-$VERSION_NAME"
@@ -101,35 +114,35 @@ if [[ "$VERSION_NAME" != *"-rev"* ]] ; then
 fi
 
 # Check if the revision to be deployed is not the latest one
-if [[ "$VERSION_NAME" != *rev$REVISION_NUMER* ]]; then
+if [[ "$VERSION_NAME" != *rev$REVISION_NUMBER* ]]; then
 	echo "$LOG_MARK It seems that the revision number doesn't match the latest revision in the repository."
 	echo "$LOG_MARK Please insert the revision number that you want to deploy"
 	read -p "Revision number: "
-	REVISION_NUMER_INPUT=$REPLY
+	REVISION_NUMBER_INPUT=$REPLY
 
 	# Wrong format
-	if [[ $REVISION_NUMER_INPUT == *[!0-9]* ]]; then
+	if [[ $REVISION_NUMBER_INPUT == *[!0-9]* ]]; then
     echo "$LOG_MARK Incorrect revision format, aborting"
     exit -1
 	fi
 
 	# Can't be greater than the last one
-	if [[ $REVISION_NUMER_INPUT > $REVISION_NUMER ]]; then
+	if [[ $REVISION_NUMBER_INPUT > $REVISION_NUMBER ]]; then
 		echo "$LOG_MARK Revision greater than the last one, aborting"
 		exit -1
 	fi
 
 	# Adjusting the desired revision number
-	REVISION_NUMER=$REVISION_NUMER_INPUT
-	echo "$LOG_MARK New revision number:" $REVISION_NUMER
+	REVISION_NUBMER=$REVISION_NUMBER_INPUT
+	echo "$LOG_MARK New revision number:" $REVISION_NUMBER
 fi
 
 # Check if that revision is already deployed
 echo "$LOG_MARK Checking if the desired revision is already present"
-RELEASE_ALREADY_PRESENT=$( $SSH_PREFIX "ls -al $APS_DIR_ROOT$APP_NAME | grep" "rev$REVISION_NUMER")
+RELEASE_ALREADY_PRESENT=$( $SSH_PREFIX "ls -al $APS_DIR_ROOT$APP_NAME | grep" "rev$REVISION_NUMBER")
 
 if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
-	echo "$LOG_MARK The latest revision is" $REVISION_NUMER "which is already present"
+	echo "$LOG_MARK The latest revision is" $REVISION_NUMBER "which is already present"
 	echo "$LOG_MARK Process aborted."
 	exit -2
 fi
@@ -144,8 +157,8 @@ TMP_SVN_LOG=$TMP_DIR_NAME"/"svn_log.tmp
 
 # Code download
 echo "$LOG_MARK Downloading code from SVN repository"
-$SSH_PREFIX svn co --username="$SVN_USERNAME" --password="$SVN_PASSWORD" "$SVN_REPO""/trunk@$REVISION_NUMER" $TMP_DIR_NAME"/trunk" "> $TMP_SVN_LOG"
-$SSH_PREFIX svn co --username="$SVN_USERNAME" --password="$SVN_PASSWORD" "$SVN_REPO""/config@$REVISION_NUMER" $TMP_DIR_NAME"/config" "> $TMP_SVN_LOG"
+$SSH_PREFIX svn co --username="$SVN_USERNAME" --password="$SVN_PASSWORD" "$SVN_REPO""/trunk@$REVISION_NUMBER" $TMP_DIR_NAME"/trunk" "> $TMP_SVN_LOG"
+$SSH_PREFIX svn co --username="$SVN_USERNAME" --password="$SVN_PASSWORD" "$SVN_REPO""/config@$REVISION_NUMBER" $TMP_DIR_NAME"/config" "> $TMP_SVN_LOG"
 
 # Create release directory
 NEW_RELEASE_DIR=$APS_DIR_ROOT$APP_NAME"/$VERSION_NAME"
@@ -184,7 +197,7 @@ $ROOT_SSH_PREFIX "chown -h www-data:"$USER" $PORTAL_DIR ; chmod 774 -R $NEW_RELE
 echo "$LOG_MARK Performing SVN Tag"
 DEPLOYMENT_TAG_MESSAGE="$LOG_MARK Production deployment of version $VERSION_NAME fixes #$REDMINE_ISSUE_NUMBER"
 echo "$LOG_MARK $DEPLOYMENT_TAG_MESSAGE"
-$SSH_PREFIX svn copy --username="$SVN_USERNAME" --password="$SVN_PASSWORD" "$SVN_REPO/trunk@$REVISION_NUMER" "$SVN_REPO/tags/$VERSION_NAME -m \"$DEPLOYMENT_TAG_MESSAGE\""
+$SSH_PREFIX svn copy --username="$SVN_USERNAME" --password="$SVN_PASSWORD" "$SVN_REPO/trunk@$REVISION_NUMBER" "$SVN_REPO/tags/$VERSION_NAME -m \"$DEPLOYMENT_TAG_MESSAGE\""
 
 # Deleting temp directory
 echo "$LOG_MARK Process completed, deleting temp files"
