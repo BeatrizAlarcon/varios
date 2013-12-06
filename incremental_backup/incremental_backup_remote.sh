@@ -27,7 +27,6 @@ BACKUPS_TO_KEEP=21
 EXCLUSSIONS="--exclude .cache/ --exclude .thumbnails/ --exclude .gvfs"
 OPTIONS="-h -ab --stats -e ssh"
 #To test the script, include "-n" to perform a 'dry' rsync
-LOG=/var/log/rsync.log
 
 #############################################################################
 # Arguments processing. The last argument is the destination directory, then#
@@ -37,8 +36,8 @@ LOG=/var/log/rsync.log
 ARGS=("$@")
 
 if [ ${#ARGS[*]} -lt 2 ]; then
-  echo "At least two arguments are needed" >> $LOG
-  echo "Usage: bash incremental_backup [SOURCE_DIR_1]...[SOURCE_DIR_N] [DESTINATION_DIR]" >> $LOG
+  echo "At least two arguments are needed"
+  echo "Usage: bash incremental_backup [SOURCE_DIR_1]...[SOURCE_DIR_N] [DESTINATION_DIR]"
   exit;
 else
 
@@ -59,16 +58,16 @@ else
 
   # Function to find out if a string contains a substring
   strindex() { 
-    x="${1%%$2*}"
-    [[ $x = $1 ]] && echo -1 || echo ${#x}
-  }
+  x="${1%%$2*}"
+  [[ $x = $1 ]] && echo -1 || echo ${#x}
+}
 
   # Check if the destination directory is like user@host:directory
   INDEX=`strindex "$DEST_DIR" ":"`
   DEST_DIR_LENGTH=`expr length $DEST_DIR`
 
   if [ $INDEX -eq -1 ]; then
-    echo "Desination directory is not remote.Aborting." >> $LOG
+    echo "Desination directory is not remote.Aborting."
     exit 0
   fi
 
@@ -80,15 +79,15 @@ else
   REMOTE_PREFIX="$EXTRACTED_PREFIX:"
 
   # Log parameters
-  echo "[" `date +%Y-%m-%d_%R` "]" "###### Starting backup #######" >> $LOG
-  echo "[" `date +%Y-%m-%d_%R` "]" "Directories to backup"  $SOURCE_DIRS >> $LOG
-  echo "[" `date +%Y-%m-%d_%R` "]" "Destination directory"  $DEST_DIR >> $LOG
-  echo "[" `date +%Y-%m-%d_%R` "]" "Limit to full backup:"  $FULL_BACKUP_LIMIT >> $LOG
-  echo "[" `date +%Y-%m-%d_%R` "]" "Backups to keep:"       $BACKUPS_TO_KEEP >> $LOG
-  echo "[" `date +%Y-%m-%d_%R` "]" "Extracted prefix:"      $EXTRACTED_PREFIX >> $LOG
-  echo "[" `date +%Y-%m-%d_%R` "]" "Clean dest dir:"        $CLEAN_DEST_DIR >> $LOG
-  echo "[" `date +%Y-%m-%d_%R` "]" "Exclussions:"           $EXCLUSSIONS >> $LOG
-  echo "[" `date +%Y-%m-%d_%R` "]" "###### Browsing previous backups ######" >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "###### Starting backup #######"
+  echo "[" `date +%Y-%m-%d_%R` "]" "Directories to backup"  $SOURCE_DIRS
+  echo "[" `date +%Y-%m-%d_%R` "]" "Destination directory"  $DEST_DIR
+  echo "[" `date +%Y-%m-%d_%R` "]" "Limit to full backup:"  $FULL_BACKUP_LIMIT
+  echo "[" `date +%Y-%m-%d_%R` "]" "Backups to keep:"       $BACKUPS_TO_KEEP
+  echo "[" `date +%Y-%m-%d_%R` "]" "Extracted prefix:"      $EXTRACTED_PREFIX
+  echo "[" `date +%Y-%m-%d_%R` "]" "Clean dest dir:"        $CLEAN_DEST_DIR
+  echo "[" `date +%Y-%m-%d_%R` "]" "Exclussions:"           $EXCLUSSIONS
+  echo "[" `date +%Y-%m-%d_%R` "]" "###### Browsing previous backups ######"
 fi
 
 ############################################################################
@@ -100,39 +99,39 @@ BACKUPS_LIST=()
 
 for x in $BACKUPS
 do
-    BACKUPS_LIST[$BACKUP_COUNTER]="$x"
-    echo "[" `date +%Y-%m-%d_%R` "]" "backup detected:" ${BACKUPS_LIST[$BACKUP_COUNTER]} >> $LOG
-    let BACKUP_COUNTER=BACKUP_COUNTER+1 
-    
+  BACKUPS_LIST[$BACKUP_COUNTER]="$x"
+  echo "[" `date +%Y-%m-%d_%R` "]" "backup detected:" ${BACKUPS_LIST[$BACKUP_COUNTER]}
+  let BACKUP_COUNTER=BACKUP_COUNTER+1 
+
 done
 
 ############################################################################
 # Delete old backups, if necessary                                         #
 ############################################################################
 
-echo "[" `date +%Y-%m-%d_%R` "]" "###### Deleting old backups ######" >> $LOG
-echo "[" `date +%Y-%m-%d_%R` "]" "Number of previous backups: " ${#BACKUPS_LIST[*]} >> $LOG
-echo "[" `date +%Y-%m-%d_%R` "]" "Backups to keep:"      $BACKUPS_TO_KEEP >> $LOG
+echo "[" `date +%Y-%m-%d_%R` "]" "###### Deleting old backups ######"
+echo "[" `date +%Y-%m-%d_%R` "]" "Number of previous backups: " ${#BACKUPS_LIST[*]}
+echo "[" `date +%Y-%m-%d_%R` "]" "Backups to keep:"      $BACKUPS_TO_KEEP
 
 ###
 if [ $BACKUPS_TO_KEEP -lt ${#BACKUPS_LIST[*]} ]; then
   let BACKUPS_TO_DELETE=${#BACKUPS_LIST[*]}-$BACKUPS_TO_KEEP
-  echo "[" `date +%Y-%m-%d_%R` "]" "Need to delete" $BACKUPS_TO_DELETE" backups" $BACKUPS_TO_DELETE >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "Need to delete" $BACKUPS_TO_DELETE" backups" $BACKUPS_TO_DELETE
 
   while [ $BACKUPS_TO_DELETE -gt 0 ]; do
     BACKUP=${BACKUPS_LIST[${#BACKUPS_LIST[*]}-1]}
     unset BACKUPS_LIST[${#BACKUPS_LIST[*]}-1]
-    echo "[" `date +%Y-%m-%d_%R` "]" "Backup to delete:" $BACKUP >> $LOG
-    $SSH_PREFIX  rm -rf $CLEAN_DEST_DIR"/"$BACKUP >> $LOG
+    echo "[" `date +%Y-%m-%d_%R` "]" "Backup to delete:" $BACKUP
+    $SSH_PREFIX  rm -rf $CLEAN_DEST_DIR"/"$BACKUP
     if [ $? -ne 0 ]; then
-      echo "[" `date +%Y-%m-%d_%R` "]" "####### Error while deleting backup #######" >> $LOG
+      echo "[" `date +%Y-%m-%d_%R` "]" "####### Error while deleting backup #######"
     else
-      echo "[" `date +%Y-%m-%d_%R` "]" "Backup correctly deleted" >> $LOG
+      echo "[" `date +%Y-%m-%d_%R` "]" "Backup correctly deleted"
     fi
     let BACKUPS_TO_DELETE=BACKUPS_TO_DELETE-1
   done
 else
-  echo "[" `date +%Y-%m-%d_%R` "]" "No need to delete backups" >> $LOG  
+  echo "[" `date +%Y-%m-%d_%R` "]" "No need to delete backups"  
 fi
 
 
@@ -146,14 +145,14 @@ NEXT_BACKUP_FULL=true
 COUNTER=0
 LAST_FULL_BACKUP=
 
-echo "[" `date +%Y-%m-%d_%R` "]" "###### Performing the backup ######" >> $LOG
+echo "[" `date +%Y-%m-%d_%R` "]" "###### Performing the backup ######"
 
 while [[ $COUNTER -lt $FULL_BACKUP_LIMIT && $COUNTER -lt ${#BACKUPS_LIST[*]} ]]; do
   if [[ ${BACKUPS_LIST[$COUNTER]} == *full* ]]; then
   	NEXT_BACKUP_FULL=false;
   	LAST_FULL_BACKUP=${BACKUPS_LIST[$COUNTER]}
-    echo "[" `date +%Y-%m-%d_%R` "]" "A full backup was performed" $COUNTER "backups ago which is less that the specified limit of" $FULL_BACKUP_LIMIT>> $LOG
-  	break;
+    echo "[" `date +%Y-%m-%d_%R` "]" "A full backup was performed" $COUNTER "backups ago which is less that the specified limit of" $FULL_BACKUP_LIMIT
+    break;
   fi
   let COUNTER=COUNTER+1
 done
@@ -162,25 +161,26 @@ done
 # Finally, the backup is performed                                         #
 ############################################################################
 
+sudo service apache2 stop
 if [ $NEXT_BACKUP_FULL == true ]; then
-	echo "[" `date +%Y-%m-%d_%R` "]" "The backup will be full" >> $LOG	
-	rsync $OPTIONS $EXCLUSSIONS $SOURCE_DIRS $DEST_DIR/$FULL_BACKUP_STRING  >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "The backup will be full"
+  echo "[" `date +%Y-%m-%d_%R` "]" "Stopping Apache"
+  rsync $OPTIONS $EXCLUSSIONS $SOURCE_DIRS $DEST_DIR/$FULL_BACKUP_STRING
 else
-  echo "[" `date +%Y-%m-%d_%R` "]" "The backup will be incremental" >> $LOG
-	 rsync $OPTIONS $EXCLUSSIONS --link-dest=$CLEAN_DEST_DIR/$LAST_FULL_BACKUP $SOURCE_DIRS $DEST_DIR/$INC_BACKUP_STRING >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "The backup will be incremental"
+  rsync $OPTIONS $EXCLUSSIONS --link-dest=$CLEAN_DEST_DIR/$LAST_FULL_BACKUP $SOURCE_DIRS $DEST_DIR/$INC_BACKUP_STRING
 fi
 
 ############################################################################
 # Log the backup status                                                    #
 ############################################################################
 
-if [ $? -ne 0 ]; then
-	echo "[" `date +%Y-%m-%d_%R` "]" "####### Error during the backup. Please execute the script with the -v flag #######" >> $LOG
-
-  echo "" >> $LOG
-  echo "" >> $LOG
+RETURN_STATUS=`$?`
+if [ $RETURN_STATUS -ne 0 ]; then
+  echo "[" `date +%Y-%m-%d_%R` "]" "####### Error during the backup. Please execute the script with the -v flag #######"
+  echo "[" `date +%Y-%m-%d_%R` "]" "####### Error Code: $RETURN_STATUS. Please execute the script with the -v flag #######"
 else
-	echo "[" `date +%Y-%m-%d_%R` "]" "####### Backup correct #######" >> $LOG
-  echo "" >> $LOG
-  echo "" >> $LOG
+  echo "[" `date +%Y-%m-%d_%R` "]" "####### Backup correct #######"
 fi
+echo "[" `date +%Y-%m-%d_%R` "]" "Restarting Apache"
+sudo service apache2 restart
