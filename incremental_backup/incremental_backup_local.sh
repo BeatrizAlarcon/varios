@@ -21,8 +21,8 @@ DATE=`date +%Y%m%d`
 TIMESTAMP=$(date +%m%d%y%H%M%S) 
 FULL_BACKUP_STRING=backup-full-$DATE-$TIMESTAMP
 INC_BACKUP_STRING=backup-inc-$DATE-$TIMESTAMP
-FULL_BACKUP_LIMIT=6
-BACKUPS_TO_KEEP=21
+FULL_BACKUP_LIMIT=4
+BACKUPS_TO_KEEP=12
 EXCLUSSIONS="--exclude .cache/ --exclude .thumbnails/ --exclude .gvfs"
 OPTIONS="-h -ab --stats"
 #To test the script, include "-n" to perform a 'dry' rsync
@@ -160,7 +160,7 @@ fi
 # Log the backup status                                                    #
 ############################################################################
 
-if [ $? -ne 0 ]; then
+if [ $? -ne "0" ]; then
 	echo "[" `date +%Y-%m-%d_%R` "]" "####### Error during the backup. Please execute the script with the -v flag #######"
   if $NOTIFY ; then
     notify-send "Error during the backup"

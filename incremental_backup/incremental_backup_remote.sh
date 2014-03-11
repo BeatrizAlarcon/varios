@@ -176,7 +176,7 @@ fi
 ############################################################################
 
 RETURN_STATUS=`$?`
-if [ $RETURN_STATUS -ne 0 ]; then
+if [ $RETURN_STATUS -ne "0" ]; then
   echo "[" `date +%Y-%m-%d_%R` "]" "####### Error during the backup. Please execute the script with the -v flag #######"
   echo "[" `date +%Y-%m-%d_%R` "]" "####### Error Code: $RETURN_STATUS. Please execute the script with the -v flag #######"
 else
