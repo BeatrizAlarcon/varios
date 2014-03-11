@@ -84,7 +84,7 @@ read -s SVN_PASSWORD
 
 # Find out last SVN revision
 echo "$LOG_MARK Browsing repository revision number"
-REVISION_NUMBER_OUTPUT=`svn info $SVN_REPO | grep "$REVISION_KEYWORD"`
+REVISION_NUMBER_OUTPUT=`svn info --username="$SVN_USERNAME" --password="$SVN_PASSWORD" $SVN_REPO | grep "$REVISION_KEYWORD"`
 
 if [ $? -ne 0 ]; then
   echo "$LOG_MARK Error while connecting to SVN, aborting."
