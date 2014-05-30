@@ -194,9 +194,10 @@ echo "$LOG_MARK Symlinking the files folder from the resources directory"
 ln -s "$RESOURCE_DIR""/files" "$PORTAL_DIR""/sites/default"
 
 echo "$LOG_MARK chown to www-data the new release directory and the symlink directory"
-chown -h www-data:$OPERATION_USER $PORTAL_DIR
-chmod 774 -R $NEW_RELEASE_DIR
-chown -R www-data:$OPERATION_USER $NEW_RELEASE_DIR
+chown -h $OPERATION_USER:www-data $PORTAL_DIR
+chown -R $OPERATION_USER:www-data $NEW_RELEASE_DIR
+chmod 750 -R $NEW_RELEASE_DIR
+chmod 770 -R $NEW_RELEASE_DIR"/sites/default/files"
 
 # Insert mark so the developers can see the revision number
 echo "$LOG_MARK Inserting revision line in drupal template footer"
@@ -206,4 +207,8 @@ echo "$LOG_MARK Process completed, deleting temp files"
 rm -rf $TMP_DIR_NAME
 
 echo "$LOG_MARK Done"
+
+#Reload apache config, as some symlinks behave weird otherwise
+service apache2 reload
+
 exit 0

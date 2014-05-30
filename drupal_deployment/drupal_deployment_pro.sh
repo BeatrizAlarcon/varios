@@ -191,7 +191,8 @@ $SSH_PREFIX ln -s "$RESOURCE_DIR""/files" "$PORTAL_DIR""/sites/default"
 
 # Chown to apache user
 echo "$LOG_MARK chown to www-data the new release directory and the symlink directory"
-$ROOT_SSH_PREFIX "chown -h www-data:"$USER" $PORTAL_DIR ; chmod 774 -R $NEW_RELEASE_DIR ; chown -R www-data:"$USER" $NEW_RELEASE_DIR"
+$ROOT_SSH_PREFIX "chown -h "$USER":www-data $PORTAL_DIR ; chmod 750 -R "$NEW_RELEASE_DIR" ; chmod 770 -R "$NEW_RELEASE_DIR"/sites/default/files ; chown -R "$USER":www-data $NEW_RELEASE_DIR"
+
 
 # SVN tag the new release, linking the commit to redmine issue
 echo "$LOG_MARK Performing SVN Tag"
@@ -204,4 +205,8 @@ echo "$LOG_MARK Process completed, deleting temp files"
 $SSH_PREFIX "rm -rf $TMP_DIR_NAME"
 
 echo "$LOG_MARK Done"
+
+#Reload apache config, as some symlinks behave weird otherwise
+$ROOT_SSH_PREFIX service apache2 reload
+
 exit 0
