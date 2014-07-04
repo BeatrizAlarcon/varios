@@ -209,8 +209,9 @@ chown -R www-data:$OPERATION_USER $NEW_RELEASE_DIR
 echo "$LOG_MARK Inserting revision line in login page footer"
 echo "$LOG_MARK Revision $REVISION_NUMBER deployed on $LOG_MARK" >> $THEME_FILE
 
-echo "$LOG_MARK Process completed, deleting temp files"
+echo "$LOG_MARK Process completed, deleting temp files and reloading Apache"
 rm -rf $TMP_DIR_NAME
+service apache2 reload
 
 echo "$LOG_MARK Done"
 exit 0
