@@ -26,8 +26,8 @@ TMP_DIR_ROOT="/tmp/"
 APS_DIR_ROOT="/opt/"
 MOODLE_HEADER="moodle_25"
 DATA_DIR="/data/moodle-resource/25/"
-#REVISION_KEYWORD="Revisión:"
-REVISION_KEYWORD="Revision:"
+REVISION_KEYWORD="Revisión:"
+#REVISION_KEYWORD="Revision:"
 
  # Function to find out if a string contains a substring
   strindex() { 
@@ -62,7 +62,7 @@ else
 fi
 
 
-TMP_DIR_NAME=$TMP_DIR_ROOT$APP_NAME"-"$DATE"-"$TIMESTAMP
+TMP_DIR_NAME=$TMP_DIR_ROOT$MOODLE_HEADER"-"$DATE"-"$TIMESTAMP
 PORTAL_DIR=$APS_DIR_ROOT$MOODLE_HEADER
 
 
@@ -96,8 +96,11 @@ fi
 
 # Processing the info received from SVN
 REVISION_NUMBER_OUTPUT_LENGTH=${#REVISION_NUMBER_OUTPUT}
+let REVISION_NUMBER_OUTPUT_LENGTH=$REVISION_NUMBER_OUTPUT_LENGTH+1
 REVISION_NUMBER_START=`strindex "$REVISION_NUMBER_OUTPUT" ":"`
-let REVISION_NUMBER_START=$REVISION_NUMBER_START+3
+let REVISION_NUMBER_START=$REVISION_NUMBER_START+4
+echo $REVISION_NUMBER_START;
+echo $REVISION_NUMBER_OUTPUT_LENGTH
 REVISION_NUMBER=`echo $REVISION_NUMBER_OUTPUT | cut -c$REVISION_NUMBER_START-$REVISION_NUMBER_OUTPUT_LENGTH`
 echo "$LOG_MARK Revision number: " $REVISION_NUMBER
 
@@ -143,7 +146,7 @@ fi
 # Check if that revision is already deployed
 echo "$LOG_MARK Checking if the desired revision is already present"
 RELEASE_ALREADY_PRESENT=$( $SSH_PREFIX "ls -al $APS_DIR_ROOT | grep" "rev$REVISION_NUMBER")
-
+echo $RELEASE_ALREADY_PRESENT
 if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
 	echo "$LOG_MARK The latest revision is" $REVISION_NUMBER "which is already present"
 	echo "$LOG_MARK Process aborted."
@@ -175,10 +178,10 @@ $SSH_PREFIX mkdir $NEW_RELEASE_DIR
 
 # Copying code to release directory
 echo "$LOG_MARK Copying code to release directory"
-cp -rv $SOURCES_DIR* $NEW_RELEASE_DIR  > /dev/null
+$SSH_PREFIX cp -rv $SOURCES_DIR* $NEW_RELEASE_DIR  > /dev/null
  
 echo "$LOG_MARK Copying configuration file PRO"
-cp -rv $CONFIG_FILES_DIR"/"* $NEW_RELEASE_DIR"/" > /dev/null
+$SSH_PREFIX cp -rv $CONFIG_FILES_DIR"/"* $NEW_RELEASE_DIR"/" > /dev/null
 
 # Symlinking to the new version"
 echo "$LOG_MARK Deleting symlink pointing to the current version"
@@ -188,11 +191,11 @@ $SSH_PREFIX ln -s "$NEW_RELEASE_DIR" $PORTAL_DIR
 
 # sym link to data directory
 echo "$LOG_MARK symlink pointing to the data directory"
-ln -s $DATA_DIR $NEW_RELEASE_DIR"/moodle/datos"
+$SSH_PREFIX ln -s $DATA_DIR $NEW_RELEASE_DIR"/moodle/datos"
 
 # Chown to apache user
 echo "$LOG_MARK chown to www-data the new release directory and the symlink directory"
-$ROOT_SSH_PREFIX "chown -h www-data:"$USER $PORTAL_DIR ; chmod 644 -R "$NEW_RELEASE_DIR" ; chmod 777 -R "$DATA_DIR ; chown -R "www-data:"$USER $NEW_RELEASE_DIR"
+$ROOT_SSH_PREFIX "chown -h www-data:$USER $PORTAL_DIR ; $ROOT_SSH_PREFIX chmod 644 -R $NEW_RELEASE_DIR ; $ROOT_SSH_PREFIX chmod 777 -R $DATA_DIR ; $ROOT_SSH_PREFIX chown -R www-data:$USER $NEW_RELEASE_DIR"
 
 # SVN tag the new release, linking the commit to redmine issue
 echo "$LOG_MARK Performing SVN Tag"
