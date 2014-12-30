@@ -49,7 +49,7 @@ ARGS=("$@")
 
 if [ ${#ARGS[*]} -lt 5 ]; then
   echo "$LOG_MARK Four arguments are needed"
-  echo "$LOG_MARK Usage: bash moodle_deployment.sh [http://user:password@GITREPO] [MOODLE_VERSION] [OPERATION_USER] [PRE/PRO] [THEME_FILE]"
+  echo "$LOG_MARK Usage: bash moodle_deployment.sh [http://user:password@GITREPO] [MOODLE_VERSION] [OPERATION_USER] [pre/pro] [THEME_FILE]"
   exit;
 else
 	REPO=${ARGS[0]}
@@ -93,7 +93,7 @@ GIT_LOG_LAST_COMMIT=`echo $GIT_LOG_OUTPUT | cut -c1-40`
 echo "$LOG_MARK Last commit: $GIT_LOG_OUTPUT"
 
 # Check that the root app directory exists
-if [ ! -d "$APS_DIR_ROOT$MOODLE_HEADER$MOODLE_VERSION" ]; then
+if [ ! -d "$APS_DIR_ROOT" ]; then
   echo "$LOG_MARK The expected directory doesn't exist, aborting."
   echo "$RELEASE_ALREADY_PRESENT"
   rm -rf $NEW_RELEASE_DIR
@@ -103,7 +103,7 @@ fi
 
 
 # If environment == PRE, the release dir is automatic
-if [ "$ENVIRONMENT" == "PRE" ]; then
+if [ "$ENVIRONMENT" == "pre" ]; then
 
   # Find out if that version is already deployed
   RELEASE_ALREADY_PRESENT=`ls -al $APS_DIR_ROOT | grep $GIT_LOG_LAST_COMMIT`
@@ -161,9 +161,8 @@ if [ "$ENVIRONMENT" == "PRE" ]; then
   echo "$NEW_RELEASE_DIR"
   echo "$LOG_MARK Creating release dir $NEW_RELEASE_DIR. Copying files..."
   mkdir $NEW_RELEASE_DIR
-  cp -rv $TMP_DIR_NAME"/"$MOODLE_GIT_REPOSITORY_NAME"/trunk/"* $NEW_RELEASE_DIR >> /dev/null
-  cp -rv $TMP_DIR_NAME"/"$MOODLE_GIT_REPOSITORY_NAME"/config/config_files/pre/"* $NEW_RELEASE_DIR >> /dev/null
-  echo "$LOG_MARK End file copy"
+
+
 elif [ "$ENVIRONMENT" == "PRO" ]; then
   # PRO environment
 
@@ -184,7 +183,38 @@ elif [ "$ENVIRONMENT" == "PRO" ]; then
     exit -2
   fi
 
+  # Creating directories
+  echo "$LOG_MARK Creating release dir $NEW_RELEASE_DIR. Copying files..."
+  mkdir $NEW_RELEASE_DIR
+
+else
+    echo "Invalid ENVIRONMENT specified, must be 'pre' or 'pro'"
+    echo "$LOG_MARK Process aborted."
+    rm -rf $NEW_RELEASE_DIR
+    rm -rf $TMP_DIR_NAME
+    exit -2
 fi
+
+# Common instructions for pre|pro
+
+# Copying files
+cp -rv $TMP_DIR_NAME"/"$MOODLE_GIT_REPOSITORY_NAME"/trunk/"* $NEW_RELEASE_DIR >> /dev/null
+cp -rv $TMP_DIR_NAME"/"$MOODLE_GIT_REPOSITORY_NAME"/config/config_files/$ENVIRONMENT/"* $NEW_RELEASE_DIR >> /dev/null
+echo "$LOG_MARK End file copy"
+
+# sym link to data directories
+echo "$LOG_MARK symlink pointing to the data directory"
+ln -s $DATA_DIR $NEW_RELEASE_DIR"/moodle/datos"
+ln -s $SIMON_DATA_DIR $NEW_RELEASE_DIR"/login/simon/datos/logotipos"
+
+# point app_symlink to the new version
+echo "$LOG_MARK Deleting symlink pointing to the current version"
+rm $PORTAL_DIR
+
+echo "$LOG_MARK Symlinking the new release"
+ln -s "$NEW_RELEASE_DIR" $PORTAL_DIR
+
+
 
 
 echo $TMP_DIR_NAME
