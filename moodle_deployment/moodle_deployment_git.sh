@@ -21,6 +21,7 @@
 DATE=`date +%Y%m%d` 
 TIMESTAMP=`date +%y%m%d%H%M%S`
 LOG_MARK=`date +%Y-%m-%d_%R`
+DIRECTORY_MARK=`date +%Y-%m-%d`
 TMP_DIR_ROOT="/tmp/"
 APS_DIR_ROOT="/opt/"
 DATA_DIR="/data/moodle-resource/25/"
@@ -89,41 +90,36 @@ fi
 cd $MOODLE_GIT_REPOSITORY_NAME
 GIT_LOG_OUTPUT=`git log -n 1 --pretty=oneline`
 GIT_LOG_LAST_COMMIT=`echo $GIT_LOG_OUTPUT | cut -c1-40`
-echo $GIT_LOG_OUTPUT
-echo $GIT_LOG_LAST_COMMIT
+echo "$LOG_MARK Last commit: $GIT_LOG_OUTPUT"
 
-# Find out if that version is already deployed
-#RELEASE_ALREADY_PRESENT=`ls -al $APS_DIR_ROOT | grep $MOODLE_HEADER$MOODLE_VERSION"_rev"$REVISION_NUMBER`
-RELEASE_ALREADY_PRESENT=`ls -al $APS_DIR_ROOT"moodle_$MOODLE_VERSION"`
-
-if [ $? -ne 0 ]; then
-  echo "$LOG_MARK Expected directory not found, aborting."
+# Check that the root app directory exists
+if [ ! -d "$APS_DIR_ROOT$MOODLE_HEADER$MOODLE_VERSION" ]; then
+  echo "$LOG_MARK The expected directory doesn't exist, aborting."
+  echo "$RELEASE_ALREADY_PRESENT"
   rm -rf $NEW_RELEASE_DIR
   rm -rf $TMP_DIR_NAME
   exit -2
 fi
 
-echo $RELEASE_ALREADY_PRESENT
+
+# Find out if that version is already deployed
+RELEASE_ALREADY_PRESENT=`ls -al $APS_DIR_ROOT"moodle_$MOODLE_VERSION" | grep $GIT_LOG_LAST_COMMIT`
+
+if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
+  echo "$LOG_MARK The latest commit " $GIT_LOG_LAST_COMMIT "is already deployed"
+  echo "Process aborted."
+  exit -1
+fi
+
+echo "$LOG_MARK The latest revision is not deployed."
+NEW_RELEASE_DIR=$APS_DIR_ROOT$MOODLE_HEADER$MOODLE_VERSION"_"$DIRECTORY_MARK"_commit_"$GIT_LOG_LAST_COMMIT
+echo "$NEW_RELEASE_DIR"
+
 exit -3
 
 
-NEW_RELEASE_DIR=$APS_DIR_ROOT$MOODLE_HEADER$MOODLE_VERSION"_rev"$REVISION_NUMBER
-
-# Check if the latest revision is already deployed
-echo "$LOG_MARK Checking if the last revision is already present"
-echo $APS_DIR_ROOT
-echo $NEW_RELEASE_DIR
-RELEASE_ALREADY_PRESENT=`ls -al $APS_DIR_ROOT | grep $MOODLE_HEADER$MOODLE_VERSION"_rev"$REVISION_NUMBER`
 
 
-
-
-
-if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
-	echo "$LOG_MARK The latest revision is" $REVISION_NUMBER "which is already present"
-	echo "Process aborted."
-	exit -1
-fi
 
 echo "$LOG_MARK The latest revision is not present."
 
