@@ -16,7 +16,6 @@
 #                                                                          #
 # @todo                                                                    #
 # - relative symlinks                                                      #
-# - Check errors while connecting to SVN                                   #
 ############################################################################
 
 DATE=`date +%Y%m%d` 
@@ -29,6 +28,7 @@ SIMON_DATA_DIR="/data/simon-resource/datos/logotipos/"
 REVISION_KEYWORD="Revisión:"
 NUMBER_OF_VERSIONS_TO_KEEP="5"
 MOODLE_HEADER="moodle_"
+MOODLE_GIT_REPOSITORY_NAME="moodle"
 
 
 
@@ -47,7 +47,7 @@ ARGS=("$@")
 
 if [ ${#ARGS[*]} -lt 5 ]; then
   echo "$LOG_MARK Four arguments are needed"
-  echo "$LOG_MARK Usage: bash moodle_deployment.sh [REPO] [MOODLE_VERSION] [OPERATION_USER] [PRE/PRO] [THEME_FILE]"
+  echo "$LOG_MARK Usage: bash moodle_deployment.sh [http://user:password@GITREPO] [MOODLE_VERSION] [OPERATION_USER] [PRE/PRO] [THEME_FILE]"
   exit;
 else
 	REPO=${ARGS[0]}
@@ -73,8 +73,15 @@ PORTAL_DIR=$APS_DIR_ROOT$MOODLE_HEADER$MOODLE_VERSION
 
 # Find out last SVN revision
 echo "$LOG_MARK Browsing repository revision number"
+mkdir "$TMP_DIR_NAME"
+cd $TMP_DIR_NAME
+git clone $REPO
+cd $MOODLE_GIT_REPOSITORY_NAME
+GIT_LOG_OUTPUT=`git log -n 1 --pretty=oneline`
+GIT_LOG_LAST_COMMIT=`echo $GIT_LOG_OUTPUT | cut -c1-40`
+echo $GIT_LOG_OUTPUT
+echo $GIT_LOG_LAST_COMMIT
 exit -3
-REVISION_NUMBER_OUTPUT=`svn info $SVN_REPO | grep "$REVISION_KEYWORD"`
 
 if [ $? -ne 0 ]; then
   echo "$LOG_MARK Error while connecting to SVN, aborting."
