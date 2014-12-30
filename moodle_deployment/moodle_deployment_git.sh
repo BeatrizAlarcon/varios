@@ -39,6 +39,7 @@ MOODLE_GIT_REPOSITORY_NAME="moodle"
   }
 
 
+
 ############################################################################
 # Arguments processing.													   												 #
 ############################################################################
@@ -71,31 +72,40 @@ TMP_DIR_NAME=$TMP_DIR_ROOT$MOODLE_HEADER$MOODLE_VERSION"-"$DATE"-"$TIMESTAMP
 PORTAL_DIR=$APS_DIR_ROOT$MOODLE_HEADER$MOODLE_VERSION
 # RESOURCE_DIR=$APS_DIR_ROOT$APP_NAME"/"$APP_NAME"-resource"
 
-# Find out last SVN revision
-echo "$LOG_MARK Browsing repository revision number"
+# Cloning Git Repository
+echo "$LOG_MARK Cloning repo"
 mkdir "$TMP_DIR_NAME"
 cd $TMP_DIR_NAME
 git clone $REPO
-cd $MOODLE_GIT_REPOSITORY_NAME
-GIT_LOG_OUTPUT=`git log -n 1 --pretty=oneline`
-GIT_LOG_LAST_COMMIT=`echo $GIT_LOG_OUTPUT | cut -c1-40`
-echo $GIT_LOG_OUTPUT
-echo $GIT_LOG_LAST_COMMIT
-exit -3
 
 if [ $? -ne 0 ]; then
-  echo "$LOG_MARK Error while connecting to SVN, aborting."
+  echo "$LOG_MARK Error while connecting to Git Repo, aborting."
   rm -rf $NEW_RELEASE_DIR
   rm -rf $TMP_DIR_NAME
   exit -2
 fi
 
-# Processing the info received from SVN
-REVISION_NUMBER_OUTPUT_LENGTH=${#REVISION_NUMBER_OUTPUT}
-REVISION_NUMBER_START=`strindex "$REVISION_NUMBER_OUTPUT" ":"`
-let REVISION_NUMBER_START=$REVISION_NUMBER_START+4
-REVISION_NUMBER=`echo $REVISION_NUMBER_OUTPUT | cut -c$REVISION_NUMBER_START-$REVISION_NUMBER_LENGTH`
-echo "$LOG_MARK Revision number: " $REVISION_NUMBER
+# Find out last GIT commit revision
+cd $MOODLE_GIT_REPOSITORY_NAME
+GIT_LOG_OUTPUT=`git log -n 1 --pretty=oneline`
+GIT_LOG_LAST_COMMIT=`echo $GIT_LOG_OUTPUT | cut -c1-40`
+echo $GIT_LOG_OUTPUT
+echo $GIT_LOG_LAST_COMMIT
+
+# Find out if that version is already deployed
+#RELEASE_ALREADY_PRESENT=`ls -al $APS_DIR_ROOT | grep $MOODLE_HEADER$MOODLE_VERSION"_rev"$REVISION_NUMBER`
+RELEASE_ALREADY_PRESENT=`ls -al $APS_DIR_ROOT"moodle_$MOODLE_VERSION"`
+
+if [ $? -ne 0 ]; then
+  echo "$LOG_MARK Expected directory not found, aborting."
+  rm -rf $NEW_RELEASE_DIR
+  rm -rf $TMP_DIR_NAME
+  exit -2
+fi
+
+echo $RELEASE_ALREADY_PRESENT
+exit -3
+
 
 NEW_RELEASE_DIR=$APS_DIR_ROOT$MOODLE_HEADER$MOODLE_VERSION"_rev"$REVISION_NUMBER
 
@@ -104,6 +114,9 @@ echo "$LOG_MARK Checking if the last revision is already present"
 echo $APS_DIR_ROOT
 echo $NEW_RELEASE_DIR
 RELEASE_ALREADY_PRESENT=`ls -al $APS_DIR_ROOT | grep $MOODLE_HEADER$MOODLE_VERSION"_rev"$REVISION_NUMBER`
+
+
+
 
 
 if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
