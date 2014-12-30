@@ -249,7 +249,7 @@ chown -R www-data:$OPERATION_USER $NEW_RELEASE_DIR
 if [ "$ENVIRONMENT" == "pre" ]; then
   # Insert mark so the developers can see the revision number
   echo "$LOG_MARK Inserting revision line in login page footer"
-  echo "$LOG_MARK Revision $REVISION_NUMBER deployed on $LOG_MARK" >> $THEME_FILE
+  echo "$LOG_MARK Commit $GIT_LOG_LAST_COMMIT deployed on $LOG_MARK" >> $THEME_FILE
 elif [ "$ENVIRONMENT" == "pro" ]; then
   # Git tag of the release
   cd $TMP_DIR_NAME"/"$MOODLE_GIT_REPOSITORY_NAME
