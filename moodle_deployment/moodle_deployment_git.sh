@@ -71,7 +71,6 @@ fi
 TMP_DIR_NAME=$TMP_DIR_ROOT$MOODLE_HEADER$MOODLE_VERSION"-"$DATE"-"$TIMESTAMP
 
 PORTAL_DIR=$APS_DIR_ROOT$MOODLE_HEADER$MOODLE_VERSION
-# RESOURCE_DIR=$APS_DIR_ROOT$APP_NAME"/"$APP_NAME"-resource"
 
 # Cloning Git Repository
 echo "$LOG_MARK Cloning repo"
@@ -163,15 +162,16 @@ if [ "$ENVIRONMENT" == "pre" ]; then
   mkdir $NEW_RELEASE_DIR
 
 
-elif [ "$ENVIRONMENT" == "PRO" ]; then
+elif [ "$ENVIRONMENT" == "pro" ]; then
   # PRO environment
 
   # Ask for the deployment version
   echo "$LOG_MARK Please insert the full version name, as in 1.3.1-some-fixes-20141027"
   read -p "name: "
   VERSION_NAME=$REPLY
-  VERSION_NAME="$MOODLE_HEADER-$VERSION_NAME"
-  echo "The version name is: $VERSION_NAME"
+  VERSION_NAME="$MOODLE_HEADER$MOODLE_VERSION-$VERSION_NAME"
+  NEW_RELEASE_DIR=$APS_DIR_ROOT$VERSION_NAME
+  echo "The new release dir is: $NEW_RELEASE_DIR"
 
   # Check if that revision is already deployed
   echo "$LOG_MARK Checking if the desired revision is already present"
@@ -185,6 +185,7 @@ elif [ "$ENVIRONMENT" == "PRO" ]; then
 
   # Creating directories
   echo "$LOG_MARK Creating release dir $NEW_RELEASE_DIR. Copying files..."
+  echo $NEW_RELEASE_DIR
   mkdir $NEW_RELEASE_DIR
 
 else
@@ -214,81 +215,27 @@ rm $PORTAL_DIR
 echo "$LOG_MARK Symlinking the new release"
 ln -s "$NEW_RELEASE_DIR" $PORTAL_DIR
 
-
-
-
-echo $TMP_DIR_NAME
-exit -3
-
-
-
-
-# Creating directories
-echo "$LOG_MARK Creating temp dir: $TMP_DIR_NAME"
-mkdir $TMP_DIR_NAME
-mkdir $TMP_DIR_NAME"/trunk"
-SOURCES_DIR=$TMP_DIR_NAME"/trunk/"
-CONFIG_FILES_DIR=$TMP_DIR_NAME"/config/config_files/pre/"
-TMP_SVN_LOG=$TMP_DIR_ROOT"/svn_log.tmp"
-
-echo "Creating release directory: $NEW_RELEASE_DIR"
-mkdir $NEW_RELEASE_DIR
-
-# Code download
-echo "$LOG_MARK Downloading code from SVN repository"
-svn co "$SVN_REPO""/trunk" $TMP_DIR_NAME"/trunk" > "$TMP_SVN_LOG"
-if [ $? -ne 0 ]; then
-  echo "$LOG_MARK Error while connecting to SVN, aborting."
-  rm -rf $NEW_RELEASE_DIR
-  rm -rf $TMP_DIR_NAME
-  exit -2
-fi
-
-svn co "$SVN_REPO""/config/config_files/pre" $CONFIG_FILES_DIR > "$TMP_SVN_LOG"
-if [ $? -ne 0 ]; then
-  echo "$LOG_MARK Error while connecting to SVN, aborting."
-  rm -rf $NEW_RELEASE_DIR
-  rm -rf $TMP_DIR_NAME
-  exit -2
-fi
-
-# Deleting hidden files
-echo "$LOG_MARK Deleting hidden files in sources directory"
-rm -rf `find $TMP_DIR_NAME/ -name '\.*'`
-
-# Copying code and setting symlinks
-echo "$LOG_MARK Copying code to release directory"
-cp -rv $SOURCES_DIR* $NEW_RELEASE_DIR  > /dev/null
- 
-echo "$LOG_MARK Copying configuration file PRE"
-echo $CONFIG_FILES_DIR
-echo $NEW_RELEASE_DIR
-cp -rv $CONFIG_FILES_DIR* $NEW_RELEASE_DIR"/" > /dev/null
-
-
-echo "$LOG_MARK Checking that every hidden file was deleted"
-find $NEW_RELEASE_DIR/ -name '\.*'
-
-# sym link to data directory
-echo "$LOG_MARK symlink pointing to the data directory"
-ln -s $DATA_DIR $NEW_RELEASE_DIR"/moodle/datos"
-ln -s $SIMON_DATA_DIR $NEW_RELEASE_DIR"/login/simon/datos/logotipos"
-
-# point app_symlink to the new version
-echo "$LOG_MARK Deleting symlink pointing to the current version"
-rm $PORTAL_DIR
-
-echo "$LOG_MARK Symlinking the new release"
-ln -s "$NEW_RELEASE_DIR" $PORTAL_DIR
+# Adjusting permissions
+echo "$LOG_MARK chown to www-data the new release directory and the symlink directory"
+chown -h www-data:$OPERATION_USER $PORTAL_DIR
+chmod 774 -R $NEW_RELEASE_DIR
+chown -R www-data:$OPERATION_USER $NEW_RELEASE_DIR
 
 echo "$LOG_MARK chown to www-data the new release directory and the symlink directory"
 chown -h www-data:$OPERATION_USER $PORTAL_DIR
 chmod 774 -R $NEW_RELEASE_DIR
 chown -R www-data:$OPERATION_USER $NEW_RELEASE_DIR
 
-# Insert mark so the developers can see the revision number
-echo "$LOG_MARK Inserting revision line in login page footer"
-echo "$LOG_MARK Revision $REVISION_NUMBER deployed on $LOG_MARK" >> $THEME_FILE
+if [ "$ENVIRONMENT" == "pre" ]; then
+  # Insert mark so the developers can see the revision number
+  echo "$LOG_MARK Inserting revision line in login page footer"
+  echo "$LOG_MARK Revision $REVISION_NUMBER deployed on $LOG_MARK" >> $THEME_FILE
+elif [ "$ENVIRONMENT" == "pro" ]; then
+  # Git tag of the release
+  cd $TMP_DIR_NAME"/"$MOODLE_GIT_REPOSITORY_NAME
+  git tag -a $VERSION_NAME -m "automatic tag after deployment version on $DIRECTORY_MARK="
+  git push origin $VERSION_NAME
+fi
 
 echo "$LOG_MARK Process completed, deleting temp files"
 rm -rf $TMP_DIR_NAME
@@ -296,4 +243,3 @@ service apache2 reload
 
 echo "$LOG_MARK Done"
 exit 0
-
