@@ -102,66 +102,96 @@ if [ ! -d "$APS_DIR_ROOT$MOODLE_HEADER$MOODLE_VERSION" ]; then
 fi
 
 
-# Find out if that version is already deployed
-RELEASE_ALREADY_PRESENT=`ls -al $APS_DIR_ROOT"moodle_$MOODLE_VERSION" | grep $GIT_LOG_LAST_COMMIT`
+# If environment == PRE, the release dir is automatic
+if [ "$ENVIRONMENT" == "PRE" ]; then
 
-if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
-  echo "$LOG_MARK The latest commit " $GIT_LOG_LAST_COMMIT "is already deployed"
-  echo "Process aborted."
-  exit -1
+  # Find out if that version is already deployed
+  RELEASE_ALREADY_PRESENT=`ls -al $APS_DIR_ROOT | grep $GIT_LOG_LAST_COMMIT`
+
+  if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
+    echo "$LOG_MARK The latest commit " $GIT_LOG_LAST_COMMIT "is already deployed"
+    echo "Process aborted."
+    exit -1
+  fi
+
+  echo "$LOG_MARK The latest revision is not deployed."
+
+  # Check if old revisions should be deleted
+  echo "$LOG_MARK Checking if old revisions should be deleted"
+  DEPLOYED_VERSIONS=`ls -tr $APS_DIR_ROOT |grep $MOODLE_HEADER$MOODLE_VERSION`
+  DEPLOYED_VERSIONS_COUNTER=0
+  DEPLOYED_VERSIONS_LIST=()
+
+  # Iterate through deployed versions
+  for x in $DEPLOYED_VERSIONS
+  do
+      DEPLOYED_VERSIONS_LIST[$DEPLOYED_VERSIONS_COUNTER]="$x"
+      # echo "$LOG_MARK" ${DEPLOYED_VERSIONS_LIST[$DEPLOYED_VERSIONS_COUNTER]}
+      let DEPLOYED_VERSIONS_COUNTER=DEPLOYED_VERSIONS_COUNTER+1
+  done
+
+  echo "$LOG_MARK Deleting old versions"
+  echo "$LOG_MARK Number of deployed versions: " ${#DEPLOYED_VERSIONS_LIST[*]}
+  echo "$LOG_MARK Number of versions to keep:"      $NUMBER_OF_VERSIONS_TO_KEEP
+
+  # Delete revisions, if necessary
+  if [ $NUMBER_OF_VERSIONS_TO_KEEP -lt $DEPLOYED_VERSIONS_COUNTER ]; then
+    let VERSIONS_TO_DELETE=$DEPLOYED_VERSIONS_COUNTER-$NUMBER_OF_VERSIONS_TO_KEEP
+    echo "$LOG_MARK Need to delete" $VERSIONS_TO_DELETE" versions"
+    
+    # Delete from n-1 to 0
+    let VERSIONS_TO_DELETE=$VERSIONS_TO_DELETE-1
+    while [ $VERSIONS_TO_DELETE -ge 0 ]; do
+      VERSION=${DEPLOYED_VERSIONS_LIST[$VERSIONS_TO_DELETE]}
+      echo "$LOG_MARK Version to delete:" $VERSION
+      rm -rf $APS_DIR_ROOT$APP_NAME"/"$VERSION
+      if [ $? -ne 0 ]; then
+        echo "$LOG_MARK Error while deleting version"
+      else
+        echo "$LOG_MARK Version correctly deleted"
+      fi
+      let VERSIONS_TO_DELETE=VERSIONS_TO_DELETE-1
+    done
+  else
+    echo "$LOG_MARK No need to delete old versions"
+  fi
+
+  # Creating directories
+  NEW_RELEASE_DIR=$APS_DIR_ROOT$MOODLE_HEADER$MOODLE_VERSION"_"$DIRECTORY_MARK"_commit_"$GIT_LOG_LAST_COMMIT
+  echo "$NEW_RELEASE_DIR"
+  echo "$LOG_MARK Creating release dir $NEW_RELEASE_DIR. Copying files..."
+  mkdir $NEW_RELEASE_DIR
+  cp -rv $TMP_DIR_NAME"/"$MOODLE_GIT_REPOSITORY_NAME"/trunk/"* $NEW_RELEASE_DIR >> /dev/null
+  cp -rv $TMP_DIR_NAME"/"$MOODLE_GIT_REPOSITORY_NAME"/config/config_files/pre/"* $NEW_RELEASE_DIR >> /dev/null
+  echo "$LOG_MARK End file copy"
+elif [ "$ENVIRONMENT" == "PRO" ]; then
+  # PRO environment
+
+  # Ask for the deployment version
+  echo "$LOG_MARK Please insert the full version name, as in 1.3.1-some-fixes-20141027"
+  read -p "name: "
+  VERSION_NAME=$REPLY
+  VERSION_NAME="$MOODLE_HEADER-$VERSION_NAME"
+  echo "The version name is: $VERSION_NAME"
+
+  # Check if that revision is already deployed
+  echo "$LOG_MARK Checking if the desired revision is already present"
+  RELEASE_ALREADY_PRESENT=`ls -al $APS_DIR_ROOT | grep $VERSION_NAME`
+  echo $RELEASE_ALREADY_PRESENT
+  if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
+    echo "$LOG_MARK The latest revision is" $REVISION_NUMBER "which is already present"
+    echo "$LOG_MARK Process aborted."
+    exit -2
+  fi
+
 fi
 
-echo "$LOG_MARK The latest revision is not deployed."
-NEW_RELEASE_DIR=$APS_DIR_ROOT$MOODLE_HEADER$MOODLE_VERSION"_"$DIRECTORY_MARK"_commit_"$GIT_LOG_LAST_COMMIT
-echo "$NEW_RELEASE_DIR"
 
+echo $TMP_DIR_NAME
 exit -3
 
 
 
-
-
-echo "$LOG_MARK The latest revision is not present."
-
-# Check if old revisions should be deleted
-echo "$LOG_MARK Checking if old revisions should be deleted"
-DEPLOYED_VERSIONS=`ls -tr $APS_DIR_ROOT |grep $MOODLE_HEADER$MOODLE_VERSION_rev`
-DEPLOYED_VERSIONS_COUNTER=0
-DEPLOYED_VERSIONS_LIST=()
-
-# Iterate through deployed versions
-for x in $DEPLOYED_VERSIONS
-do
-    DEPLOYED_VERSIONS_LIST[$DEPLOYED_VERSIONS_COUNTER]="$x"
-    # echo "$LOG_MARK" ${DEPLOYED_VERSIONS_LIST[$DEPLOYED_VERSIONS_COUNTER]}
-    let DEPLOYED_VERSIONS_COUNTER=DEPLOYED_VERSIONS_COUNTER+1
-done
-
-echo "$LOG_MARK Deleting old versions"
-echo "$LOG_MARK Number of deployed versions: " ${#DEPLOYED_VERSIONS_LIST[*]}
-echo "$LOG_MARK Number of versions to keep:"      $NUMBER_OF_VERSIONS_TO_KEEP
-
-# Delete revisions, if necessary
-if [ $NUMBER_OF_VERSIONS_TO_KEEP -lt $DEPLOYED_VERSIONS_COUNTER ]; then
-  let VERSIONS_TO_DELETE=$DEPLOYED_VERSIONS_COUNTER-$NUMBER_OF_VERSIONS_TO_KEEP
-  echo "$LOG_MARK Need to delete" $VERSIONS_TO_DELETE" versions"
-  
-  # Delete from n-1 to 0
-  let VERSIONS_TO_DELETE=$VERSIONS_TO_DELETE-1
-  while [ $VERSIONS_TO_DELETE -ge 0 ]; do
-    VERSION=${DEPLOYED_VERSIONS_LIST[$VERSIONS_TO_DELETE]}
-    echo "$LOG_MARK Version to delete:" $VERSION
-    rm -rf $APS_DIR_ROOT$APP_NAME"/"$VERSION
-    if [ $? -ne 0 ]; then
-      echo "$LOG_MARK Error while deleting version"
-    else
-      echo "$LOG_MARK Version correctly deleted"
-    fi
-    let VERSIONS_TO_DELETE=VERSIONS_TO_DELETE-1
-  done
-else
-  echo "$LOG_MARK No need to delete old versions"
-fi
 
 # Creating directories
 echo "$LOG_MARK Creating temp dir: $TMP_DIR_NAME"
