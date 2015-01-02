@@ -1,7 +1,7 @@
 #/bin/bash
 
 ############################################################################
-# Moodle deployment script                                  #
+# Moodle deployment script                                                 #
 #                                                                          #
 #                                                                          #
 #  Author: Álvaro Reig González                                            #
@@ -13,6 +13,7 @@
 #      0: correct                                                          #
 #     -1: last revision already deployed                                   #
 #     -2: error while connecting to svn                                    #
+#     -3: other Error                                                      #
 #                                                                          #
 # @todo                                                                    #
 # - relative symlinks                                                      #
@@ -51,7 +52,7 @@ ARGS=("$@")
 if [ ${#ARGS[*]} -lt 5 ]; then
   echo "$LOG_MARK Five arguments are needed"
   echo "$LOG_MARK Usage: bash moodle_deployment.sh [http://user:password@GITREPO] [MOODLE_VERSION] [OPERATION_USER] [pre/pro] [THEME_FILE]"
-  exit;
+  exit -3;
 else
 	REPO=${ARGS[0]}
 	MOODLE_VERSION=${ARGS[1]}
@@ -102,7 +103,7 @@ if [ ! -d "$APS_DIR_ROOT" ]; then
   echo "$RELEASE_ALREADY_PRESENT"
   rm -rf $NEW_RELEASE_DIR
   rm -rf $TMP_DIR_NAME
-  exit -2
+  exit -3
 fi
 
 ############################################################################
@@ -119,6 +120,8 @@ if [ "$ENVIRONMENT" == "pre" ]; then
   if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
     echo "$LOG_MARK The latest commit " $GIT_LOG_LAST_COMMIT "is already deployed"
     echo "Process aborted."
+    rm -rf $NEW_RELEASE_DIR
+    rm -rf $TMP_DIR_NAME
     exit -1
   fi
 
@@ -188,7 +191,7 @@ elif [ "$ENVIRONMENT" == "pro" ]; then
   if [ "$RELEASE_ALREADY_PRESENT" != "" ]; then
     echo "$LOG_MARK The latest revision is" $REVISION_NUMBER "which is already present"
     echo "$LOG_MARK Process aborted."
-    exit -2
+    exit -1
   fi
 
   # Decoding conf files with git-crypt
@@ -206,7 +209,7 @@ else
     echo "$LOG_MARK Process aborted."
     rm -rf $NEW_RELEASE_DIR
     rm -rf $TMP_DIR_NAME
-    exit -2
+    exit -3
 fi
 
 ############################################################################
