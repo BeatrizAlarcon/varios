@@ -1,11 +1,7 @@
 #/bin/bash
 startdelimiterkeyword="PROGRAM: "
+enddelimiterkeyword=" INSTALLED: "
 
-
-s='id;some text here with possible ; inside'
-IFS=';' read -r id string <<< "$s"
-echo "$id"
-echo "$string"
 
 strindex() { 
     x="${1%%$2*}"
@@ -27,9 +23,12 @@ do
     startprogram=$(strindex "$element" "$startdelimiterkeyword")
     let endprogram=startprogram+${#startdelimiterkeyword}+1
     stringsize=${#element}
-    echo $startprogram
-    echo $endprogram
-    echo "$element" | cut -c"$endprogram"-"$stringsize"
+    element=`echo "$element" | cut -c"$endprogram"-"$stringsize"`
     echo "$element"
+    
+    #Remove everything after " INSTALLED..."
+    startinstalled=$(strindex "$element" "$enddelimiterkeyword")
+    echo "$element" | cut -c1-"$startinstalled"
+
     echo "-----"
 done
