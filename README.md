@@ -43,3 +43,18 @@ Recursive OCR script
 
 Recursive script that uses tesseract-ocr and Geza Kovacs's pdfocr to recurse into a directory, trying to perform
 OCR in every PDF file.
+
+contenido-web-autobuses-emt
+-------
+
+Contenido web para mostrar los autobuses de la Empresa Municipal de Transportes que se aproximan a una serie de paradas. Es 
+necesario solicitar claves para acceder a la API de la EMT en http://opendata.emtmadrid.es/Formulario
+
+Para utilizar el contenido, basta con introducir las credenciales en el archivo app/main.js e instalar dependencias y "compilar" el contenido
+con:
+
+```sh
+$ npm install && bower install && grunt build
+```
+
+

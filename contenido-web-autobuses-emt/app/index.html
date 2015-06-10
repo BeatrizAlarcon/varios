@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Contenido diseñado para ser empotrado en una pantalla usando Xibo. Muestra el estado de las paradas de autobús
+    cercanas al Instituto Nacional de Administración Pública.">
+    <meta name="author" content="Álvaro Reig González">
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9" >
+
+    <title>Autobuses del INAP</title>
+
+    <!-- build:css(.) styles/vendor.css -->
+    <!-- bower:css -->
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
+    <!-- endbower -->
+    <!-- endbuild -->
+    <!-- build:css(.tmp) styles/main.css -->
+    <link rel="stylesheet" href="styles/main.css">
+    <!-- endbuild -->
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+
+    <div class="container">
+
+      <div id="master-row" class="row">
+        
+        <div class="columnamapa">
+          <div id="right-side">
+          <header>
+            <div class="bus-stop-head">
+              <figure class="left"><img src="images/emt_logo.png" alt=""></figure>
+            </div>
+          </header>
+            <div class="marco-imagenes-paradas-black">
+              <img src="images/parada_black.png" alt="">
+            </div>
+            <div class="marco-imagenes-paradas-81">
+              <img src="images/parada_81.png" alt="">
+            </div>
+            <div class="marco-imagenes-paradas-82">
+              <img src="images/parada_82.png" alt="">
+            </div>
+            <div class="marco-imagenes-paradas-83">
+              <img src="images/parada_83.png" alt="">
+            </div>
+            <div class="marco-imagenes-paradas-1924">
+              <img src="images/parada_1924.png" alt="">
+            </div>
+            <div class="marco-imagenes-paradas-1925">
+              <img src="images/parada_1925.png" alt="">
+            </div>
+          </div>
+        </div>
+        
+        <div class="culumnabuses">
+          <div class="bus-stop">
+            <ul id="left-side"> 
+              <div class="fondonegro"><p class="stop-text-title">En breve se mostrarán las paradas de autobús cercanas.<p>
+	            <figure><img class="loading" src="images/loading.gif" alt=""></figure>  
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+    </div> <!-- /container -->
+
+
+    <!-- build:js(.) scripts/vendor.js -->
+    <!-- bower:js -->
+    <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/respond-minmax/dest/respond.src.js"></script>
+    <script src="bower_components/html5shiv/dist/html5shiv.js"></script>
+    <!-- endbower -->
+    <!-- endbuild -->
+
+    <!-- build:js({app,.tmp}) scripts/main.js -->
+    <script src="scripts/main.js"></script>
+    <!-- endbuild -->
+</body>
+</html>
